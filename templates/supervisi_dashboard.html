@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-4">
+    <!-- Bagian 1: Verifikasi Order Masuk dari Konsumen -->
+    <div class="col-12">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3">Verifikasi Pesanan Masuk (Customer Orders)</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID Order</th>
+                            <th>Pemesan</th>
+                            <th>Produk & Jumlah</th>
+                            <th>Target User</th>
+                            <th>Analisis AI Kelayakan</th>
+                            <th>Status</th>
+                            <th>Aksi / Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for o in orders %}
+                        <tr>
+                            <td class="fw-bold">{{ o.order_id }}</td>
+                            <td>
+                                {{ o.customer_name }}<br>
+                                <span class="text-muted" style="font-size: 11px;">{{ o.contact }}</span>
+                            </td>
+                            <td>
+                                {{ o.product_name }}<br>
+                                <strong>{{ "{:,.0f}".format(o.quantity) }} pcs</strong> (Rp {{ "{:,.0f}".format(o.total_price) }})
+                            </td>
+                            <td>{{ o.target_date }}</td>
+                            <td>
+                                {% set eval = ai_evals[o.order_id] %}
+                                <div class="p-2 rounded bg-light border">
+                                    <span class="badge {% if eval.is_feasible %}bg-success{% else %}bg-danger{% endif %} mb-1">
+                                        {{ eval.recommendation }} ({{ eval.confidence_score }}%)
+                                    </span>
+                                    <ul class="mb-0 ps-3 text-muted" style="font-size: 11px;">
+                                        {% for r in eval.reasons %}
+                                            <li>{{ r }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge {% if o.status == 'Pending' %}bg-warning text-dark{% elif o.status == 'Approved' %}bg-info text-dark{% elif o.status == 'In Production' %}bg-primary{% elif o.status == 'Completed' %}bg-success{% elif o.status == 'Shipped' %}bg-dark{% else %}bg-secondary{% endif %}">
+                                    {{ o.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if o.status == 'Pending' %}
+                                    <!-- Tombol Trigger Modal Approve (Buat Work Order) -->
+                                    <button class="btn btn-success btn-sm mb-1 w-100" data-bs-toggle="modal" data-bs-target="#approveModal{{ loop.index }}">
+                                        Terima & Buat WO
+                                    </button>
+                                    <!-- Tombol Trigger Modal Reject -->
+                                    <button class="btn btn-danger btn-sm w-100" data-bs-toggle="modal" data-bs-target="#rejectModal{{ loop.index }}">
+                                        Tolak Order
+                                    </button>
+
+                                    <!-- Modal Approve -->
+                                    <div class="modal fade" id="approveModal{{ loop.index }}" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                                            <div class="modal-content">
+                                                <form method="POST" action="{{ url_for('approve_order', order_id=o.order_id) }}">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title fs-6 fw-bold">Buat Work Order untuk Teknisi ({{ o.order_id }})</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body text-start small">
+                                                        <p class="mb-2">Produk: <strong>{{ o.product_name }}</strong> ({{ "{:,.0f}".format(o.quantity) }} pcs)</p>
+                                                        <div class="mb-2">
+                                                            <label class="form-label fw-semibold">Pilih Mesin Produksi</label>
+                                                            <select name="machine_id" class="form-select form-select-sm" required>
+                                                                {% for m in machines %}
+                                                                <option value="{{ m.machine_id }}">{{ m.name }} (Status: {{ m.status }}, Kesehatan: {{ m.health_score }}%)</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label class="form-label fw-semibold">Tanggal Mulai Produksi</label>
+                                                            <input type="date" name="start_date" class="form-control form-control-sm" required>
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label class="form-label fw-semibold">Target Tanggal Selesai</label>
+                                                            <input type="date" name="target_date" class="form-control form-control-sm" value="{{ o.target_date }}" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                                                        <button type="submit" class="btn btn-success btn-sm">Simpan & Kirim ke Teknisi</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal Reject -->
+                                    <div class="modal fade" id="rejectModal{{ loop.index }}" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                                            <div class="modal-content">
+                                                <form method="POST" action="{{ url_for('reject_order', order_id=o.order_id) }}">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title fs-6 fw-bold">Tolak Pesanan ({{ o.order_id }})</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body text-start small">
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-semibold">Alasan Penolakan untuk User</label>
+                                                            <textarea name="supervisor_note" class="form-control" rows="3" placeholder="Contoh: Stok bahan baku habis dan mesin utama sedang dalam perbaikan." required></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                                                        <button type="submit" class="btn btn-danger btn-sm">Konfirmasi Tolak</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                {% elif o.status == 'Completed' %}
+                                    <form method="POST" action="{{ url_for('ship_order', order_id=o.order_id) }}">
+                                        <button type="submit" class="btn btn-dark btn-sm w-100">Kirim (Shipping)</button>
+                                    </form>
+                                {% else %}
+                                    <span class="text-muted small">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-3">Belum ada pesanan masuk.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<!-- Bagian 2: Live Chat Supervisi -->
+    <div class="col-lg-6">
+        <div class="card p-4 mb-4">
+            <h5 class="fw-bold mb-3">Pusat Pesan / Chat Konsumen</h5>
+            <p class="text-muted small">Kelola seluruh percakapan masuk dari konsumen layaknya aplikasi pesan instan.</p>
+            
+            <a href="{{ url_for('supervisi_chat_room', username='all') }}" class="btn btn-primary w-100 fw-semibold py-2">
+                <i class="bi bi-chat-dots me-1"></i> Buka Ruang Chat Konsumen
+            </a>
+        </div>
+
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3">Pengajuan Pembelian Bahan Baku (Procurement)</h5>
+            <form method="POST" action="{{ url_for('request_procurement') }}">
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Pilih Bahan Baku</label>
+                    <select name="material_id" class="form-select form-select-sm" required>
+                        {% for mat in inventory %}
+                        <option value="{{ mat.material_id }}">{{ mat.name }} (Stok: {{ mat.stock_kg }} kg)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Jumlah yang Diajukan (Kg)</label>
+                    <input type="number" name="quantity_kg" class="form-control form-control-sm" placeholder="Contoh: 500" required>
+                </div>
+                <button type="submit" class="btn btn-outline-dark btn-sm w-100">Ajukan ke Manager (Minta Acc)</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bagian 3: Monitoring Inventory & Aset Mesin -->
+    <div class="col-lg-6">
+        <div class="card p-4 mb-4">
+            <h5 class="fw-bold mb-3">Inventory Bahan Baku Gudang</h5>
+            <table class="table table-sm align-middle mb-0 small">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nama Bahan</th>
+                        <th>Stok (Kg)</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mat in inventory %}
+                    <tr>
+                        <td>{{ mat.material_id }}</td>
+                        <td>{{ mat.name }}</td>
+                        <td>{{ "{:,.0f}".format(mat.stock_kg) }}</td>
+                        <td>
+                            {% if mat.stock_kg <= mat.min_threshold %}
+                                <span class="badge bg-danger">Menipis</span>
+                            {% else %}
+                                <span class="badge bg-success">Aman</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3">Status Aset & Kesehatan Mesin</h5>
+            <table class="table table-sm align-middle mb-0 small">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mesin</th>
+                        <th>Tipe</th>
+                        <th>Kesehatan</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in machines %}
+                    <tr>
+                        <td class="fw-semibold">{{ m.name }}</td>
+                        <td>{{ m.type }}</td>
+                        <td>
+                            <div class="progress" style="height: 15px;">
+                                <div class="progress-bar {% if m.health_score > 80 %}bg-success{% elif m.health_score > 60 %}bg-warning{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ m.health_score }}%;">
+                                    {{ m.health_score }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-secondary">{{ m.status }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

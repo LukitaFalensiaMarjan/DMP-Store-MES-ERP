@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block navbar_center %}
+<div class="d-flex align-items-center">
+    <a href="{{ url_for('manager_financial_activity') }}" class="nav-link-custom">Info Bisnis</a>
+    <a href="{{ url_for('manager_financial_charts') }}" class="nav-link-custom">Grafik & Analisis AI</a>
+    <a href="{{ url_for('manager_procurement_approval') }}" class="nav-link-custom" style="color: #ff6f3c;">Persetujuan Bahan Baku</a>
+    <a href="{{ url_for('manager_maintenance_approval') }}" class="nav-link-custom">Persetujuan Maintenance</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 mb-4 text-white" style="background-color: #0f172a; border: 3px solid #0f172a; box-shadow: 6px 6px 0px #ff6f3c; border-radius: 10px;">
+    <span class="badge bg-warning text-dark border border-dark fw-bold mb-2">// PROCUREMENT MANAGEMENT</span>
+    <h3 class="fw-extrabold mb-1">Persetujuan Pengadaan Bahan Baku</h3>
+    <p class="small text-light opacity-75 mb-0">Setujui pengadaan bahan kimia dan kemasan dari Supervisi untuk menambah stok gudang secara otomatis.</p>
+</div>
+
+<div class="card p-4">
+    <h5 class="fw-extrabold mb-3 border-bottom pb-2">Daftar Pengajuan Pembelian Bahan Baku</h5>
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle mb-0 small">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID Pengajuan</th>
+                    <th>Nama Bahan Baku</th>
+                    <th>Jumlah (Kg)</th>
+                    <th>Estimasi Biaya</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Aksi / Keputusan</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pr in procurements %}
+                <tr>
+                    <td class="fw-bold font-monospace">{{ pr.request_id }}</td>
+                    <td class="fw-bold text-dark">
+                        <a href="javascript:void(0)" onclick="openMaterialDetailModal('{{ pr.material_id }}')" class="text-dark text-decoration-underline" title="Klik untuk rincian real-time stok bahan baku">
+                            {{ pr.material_name }}
+                        </a>
+                    </td>
+                    <td class="font-monospace fw-extrabold">{{ "{:,.1f}".format(pr.quantity_kg) }} kg</td>
+                    <td class="fw-bold">Rp {{ "{:,.0f}".format(pr.estimated_cost) }}</td>
+                    <td class="text-center">
+                        <span class="badge {% if pr.status == 'Approved' %}bg-success{% else %}bg-warning text-dark{% endif %} border border-dark">
+                            {{ pr.status }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        {% if pr.status == 'Pending Approval' %}
+                        <form method="POST" action="{{ url_for('approve_procurement', request_id=pr.request_id) }}">
+                            <button type="submit" class="btn btn-good btn-sm w-100">Acc Pembelian</button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted fw-bold">Disetujui</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4 font-monospace">TIDAK ADA PENGAJUAN PEMBELIAN BAHAN BAKU.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block navbar_center %}
+<div class="d-flex align-items-center">
+    <a href="{{ url_for('teknisi_work_orders') }}" class="nav-link-custom" style="color: #ff6f3c;">Daftar Work Order</a>
+    <a href="{{ url_for('teknisi_machine_sensors') }}" class="nav-link-custom">Input Sensor Mesin</a>
+    <a href="{{ url_for('teknisi_maintenance_recommendations') }}" class="nav-link-custom">Rekomendasi AI Mesin</a>
+    <a href="{{ url_for('teknisi_maintenance_requests') }}" class="nav-link-custom">Pengajuan Maintenance</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 mb-4 text-white" style="background-color: #0f172a; border: 3px solid #0f172a; box-shadow: 6px 6px 0px #ff6f3c; border-radius: 10px;">
+    <span class="badge bg-warning text-dark border border-dark fw-bold mb-2">// MES & PRODUCTION LINE EXECUTION</span>
+    <h3 class="fw-extrabold mb-1">Daftar Work Order, Sinkronisasi Lini Mesin & Bahan Baku</h3>
+    <p class="small text-light opacity-75 mb-0">Terima Work Order dengan memilih unit mesin sesuai lini produk dan memverifikasi ketersediaan bahan baku di gudang.</p>
+</div>
+
+<div class="card p-4" style="transform: none !important;">
+    <h5 class="fw-extrabold mb-3 border-bottom pb-2">Work Order Masuk & Status Produksi</h5>
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle mb-0 small">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID WO</th>
+                    <th>Produk & Lini Wajib</th>
+                    <th class="text-center">Target Qty</th>
+                    <th>Mesin & Bahan Baku Digunakan</th>
+                    <th>Jadwal</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center" style="min-width: 200px;">Aksi Teknisi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for wo in work_orders %}
+                {% set detail = wo_details[wo.wo_id] %}
+                <tr>
+                    <td class="fw-extrabold font-monospace">{{ wo.wo_id }}<br><small class="text-muted">{{ wo.order_id }}</small></td>
+                    <td>
+                        <div class="fw-bold text-dark">{{ wo.product_name }}</div>
+                        <span class="badge bg-dark border border-warning text-warning mt-1">Lini: {{ detail.required_line_type }}</span>
+                    </td>
+                    <td class="text-center fw-extrabold fs-6">{{ "{:,.0f}".format(wo.quantity) }} pcs</td>
+                    <td>
+                        <div class="mb-1">
+                            <span class="badge bg-secondary font-monospace">Mesin: {{ wo.machine_id }}</span>
+                            {% if detail.best_machine and wo.status == 'Scheduled' %}
+                                <span class="badge bg-info text-dark border border-dark">Rekomendasi AI: {{ detail.best_machine.machine_id }} ({{ detail.best_machine.health_score }}%)</span>
+                            {% endif %}
+                        </div>
+                        {% if wo.used_materials %}
+                            <div class="p-2 bg-light border border-dark rounded" style="font-size: 11px;">
+                                <strong class="text-success">Bahan Baku Terpakai (Dipotong dari Inventory):</strong><br>
+                                {{ wo.used_materials | join(' | ') }}
+                            </div>
+                        {% else %}
+                            <div class="text-muted" style="font-size: 11px;">
+                                {% if detail.is_stock_ready %}
+                                    <span class="text-success fw-bold">Stok Bahan Baku Tersedia di Gudang</span>
+                                {% else %}
+                                    <span class="text-danger fw-bold">Stok Bahan Baku Kurang / Defisit!</span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td class="font-monospace text-nowrap">{{ wo.start_date }}<br>s/d {{ wo.target_date }}</td>
+                    <td class="text-center">
+                        <span class="badge {% if wo.status == 'Scheduled' %}bg-warning text-dark{% elif wo.status == 'In Progress' %}bg-primary{% elif wo.status == 'Completed' %}bg-success{% else %}bg-danger{% endif %} border border-dark">
+                            {{ wo.status | upper }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        {% if wo.status == 'Scheduled' %}
+                            <button type="button" class="btn btn-good btn-sm w-100 mb-2" onclick="openModalById('acceptModal_{{ wo.wo_id }}')">
+                                Terima Order
+                            </button>
+                            <button type="button" class="btn btn-bad btn-sm w-100" onclick="openModalById('rejectModal_{{ wo.wo_id }}')">
+                                Tolak Order
+                            </button>
+                        {% elif wo.status == 'In Progress' %}
+                            <button type="button" class="btn btn-good btn-sm w-100 mb-2" onclick="openModalById('execModal_{{ wo.wo_id }}')">
+                                Orderan Selesai
+                            </button>
+                            <div class="d-flex gap-1">
+                                <button type="button" class="btn btn-edit btn-sm w-50" onclick="openModalById('acceptModal_{{ wo.wo_id }}')">
+                                    Edit
+                                </button>
+                                <button type="button" class="btn btn-bad btn-sm w-50" onclick="openModalById('rejectModal_{{ wo.wo_id }}')">
+                                    Batal
+                                </button>
+                            </div>
+                        {% elif wo.status == 'Completed' %}
+                            <span class="badge bg-success border border-dark p-2 w-100">
+                                SELESAI (OEE: {{ wo.production_report.oee_percentage }}%)
+                            </span>
+                        {% else %}
+                            <span class="text-danger small fw-bold">{{ wo.cancel_reason or 'Dibatalkan' }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4 font-monospace">BELUM ADA WORK ORDER DARI SUPERVISI.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ================= KUMPULAN MODAL DI LUAR TABEL (BEBAS KEDIP & STUCK) ================= -->
+{% for wo in work_orders %}
+{% set detail = wo_details[wo.wo_id] %}
+
+<!-- 1. Modal Terima / Edit Mesin & Bahan Baku -->
+<div class="modal fade" id="acceptModal_{{ wo.wo_id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 10px;">
+            <form method="POST" action="{{ url_for('accept_work_order', wo_id=wo.wo_id) }}">
+                <div class="modal-header text-white" style="background-color: #16a34a; border-bottom: 2px solid #0f172a;">
+                    <h5 class="modal-title fw-bold">
+                        {% if wo.status == 'Scheduled' %}TERIMA WORK ORDER & INPUT MESIN / BAHAN BAKU{% else %}EDIT UNIT MESIN PRODUKSI{% endif %} ({{ wo.wo_id }})
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light small">
+                    <div class="p-3 bg-white border border-dark rounded mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div>Produk: <strong class="text-dark">{{ wo.product_name }}</strong></div>
+                                <div>Target Produksi: <strong class="text-primary">{{ "{:,.0f}".format(wo.quantity) }} pcs</strong></div>
+                            </div>
+                            <div class="col-md-6">
+                                <div>Lini Produksi Wajib: <span class="badge bg-dark">{{ detail.required_line_type }}</span></div>
+                                {% if detail.best_machine %}
+                                <div class="mt-1">Rekomendasi AI: <strong class="text-success">{{ detail.best_machine.machine_id }} (Health: {{ detail.best_machine.health_score }}%)</strong></div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pilihan Unit Mesin (Hanya menampilkan 20 mesin yang sesuai dengan lini produk) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">1. Pilih Unit Mesin di Lini {{ detail.required_line_type }} (Tersedia 20 Unit):</label>
+                        <select name="machine_id" class="form-select border-dark fw-semibold" required>
+                            {% for m in detail.compatible_machines %}
+                            <option value="{{ m.machine_id }}"
+                                {% if detail.best_machine and m.machine_id == detail.best_machine.machine_id and wo.status == 'Scheduled' %}selected{% elif m.machine_id == wo.machine_id %}selected{% endif %}
+                                {% if m.status != 'Available' and m.machine_id != wo.machine_id %}disabled{% endif %}>
+                                {{ m.machine_id }} - {{ m.name }} | Health: {{ m.health_score }}% | Status: {{ m.status }}
+                                {% if detail.best_machine and m.machine_id == detail.best_machine.machine_id %} (DIREKOMENDASIKAN AI){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Sistem otomatis memfilter hanya mesin dari lini <strong>{{ detail.required_line_type }}</strong> agar tidak salah lini.</small>
+                    </div>
+
+                    <!-- Tabel Verifikasi Bahan Baku (BOM) -->
+                    <div class="mb-2">
+                        <label class="form-label fw-bold text-dark">2. Verifikasi & Input Bahan Baku yang Digunakan (Otomatis Dipotong dari Inventory):</label>
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle bg-white mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th class="text-center">Pakai</th>
+                                        <th>Kode & Nama Bahan Baku</th>
+                                        <th class="text-end">Kebutuhan Order</th>
+                                        <th class="text-end">Stok Tersedia</th>
+                                        <th class="text-end">Sisa Setelah Dipakai</th>
+                                        <th class="text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for req in detail.requirements %}
+                                    <tr>
+                                        <td class="text-center">
+                                            <input type="checkbox" name="selected_materials" value="{{ req.material_id }}" class="form-check-input border-dark" checked required>
+                                        </td>
+                                        <td class="fw-bold">
+                                            <a href="javascript:void(0)" onclick="openMaterialDetailModal('{{ req.material_id }}')" class="text-dark text-decoration-underline" title="Klik untuk rincian real-time stok bahan baku">
+                                                {{ req.material_id }} - {{ req.name }}
+                                            </a>
+                                        </td>
+                                        <td class="text-end fw-bold text-primary">{{ "{:,.2f}".format(req.needed) }} kg</td>
+                                        <td class="text-end font-monospace">{{ "{:,.2f}".format(req.available) }} kg</td>
+                                        <td class="text-end font-monospace {% if req.remaining_after < 0 %}text-danger fw-bold{% endif %}">
+                                            {{ "{:,.2f}".format(req.remaining_after) }} kg
+                                        </td>
+                                        <td class="text-center">
+                                            {% if req.is_enough or wo.status == 'In Progress' %}
+                                                <span class="badge bg-success border border-dark">CUKUP</span>
+                                            {% else %}
+                                                <span class="badge bg-danger border border-dark">KURANG!</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top border-dark">
+                    <button type="button" class="btn btn-outline-dark fw-bold" data-bs-dismiss="modal">Tutup</button>
+                    {% if detail.is_stock_ready or wo.status == 'In Progress' %}
+                        <button type="submit" class="btn btn-good">
+                            {% if wo.status == 'Scheduled' %}Konfirmasi Terima & Potong Stok Inventory{% else %}Simpan Perubahan Mesin{% endif %}
+                        </button>
+                    {% else %}
+                        <button type="button" class="btn btn-bad" disabled>Stok Bahan Baku Kurang (Hubungi Supervisi)</button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Modal Tolak / Batal Work Order -->
+<div class="modal fade" id="rejectModal_{{ wo.wo_id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 10px;">
+            <form method="POST" action="{{ url_for('cancel_work_order', wo_id=wo.wo_id) }}">
+                <div class="modal-header text-white" style="background-color: #dc2626; border-bottom: 2px solid #0f172a;">
+                    <h5 class="modal-title fw-bold">
+                        {% if wo.status == 'Scheduled' %}TOLAK WORK ORDER{% else %}BATALKAN PRODUKSI{% endif %} ({{ wo.wo_id }})
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light small">
+                    <p class="mb-2">Jika dibatalkan, status mesin akan kembali <strong>Available</strong> dan bahan baku yang sudah terpotong akan dikembalikan ke <strong>Inventory Gudang</strong>.</p>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Alasan Penolakan / Pembatalan ke Supervisi:</label>
+                        <textarea name="cancel_reason" class="form-control border-dark" rows="3" placeholder="Contoh: Mesin mengalami kendala tekanan atau bahan baku belum siap." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top border-dark">
+                    <button type="button" class="btn btn-outline-dark fw-bold" data-bs-dismiss="modal">Kembali</button>
+                    <button type="submit" class="btn btn-bad">Konfirmasi Tolak / Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Modal Selesaikan Work Order -->
+<div class="modal fade" id="execModal_{{ wo.wo_id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 10px;">
+            <form method="POST" action="{{ url_for('execute_work_order', wo_id=wo.wo_id) }}">
+                <div class="modal-header text-white" style="background-color: #16a34a; border-bottom: 2px solid #0f172a;">
+                    <h5 class="modal-title fw-bold">SELESAIKAN PRODUKSI & HITUNG OEE ({{ wo.wo_id }})</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light small">
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Jumlah Produk Baik (Good Output - pcs)</label>
+                        <input type="number" name="good_qty" class="form-control border-dark" value="{{ wo.quantity }}" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Jumlah Produk Cacat (Reject Output - pcs)</label>
+                        <input type="number" name="reject_qty" class="form-control border-dark" value="0" required>
+                    </div>
+                    <div class="p-2 mb-3 bg-warning bg-opacity-10 border border-warning rounded" style="font-size: 11px;">
+                        <strong class="text-dark"><i class="bi bi-gear-wide-connected"></i> Sinkronisasi Kesehatan Mesin:</strong>
+                        <div class="text-muted mt-1">
+                            Menyelesaikan Work Order ini akan mengakumulasikan pemakaian pada mesin <strong>{{ wo.machine_id }}</strong> (siklus + kuantitas {{ "{:,.0f}".format(wo.quantity) }} pcs). Persentase kesehatan mesin akan berkurang secara proporsional.
+                        </div>
+                    </div>
+                    <hr>
+                    <p class="fw-bold text-dark mb-2">Pembacaan Sensor Mesin ({{ wo.machine_id }}) Saat Selesai:</p>
+                    <div class="mb-2">
+                        <label class="form-label">Suhu Mesin (°C)</label>
+                        <input type="number" step="0.1" name="sensor_temp" class="form-control border-dark" value="44.5" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Getaran Mesin (mm/s)</label>
+                        <input type="number" step="0.1" name="sensor_vibration" class="form-control border-dark" value="1.8" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Arus Listrik (Ampere)</label>
+                        <input type="number" step="0.1" name="sensor_current" class="form-control border-dark" value="12.5" required>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top border-dark">
+                    <button type="button" class="btn btn-outline-dark fw-bold" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-good">Selesaikan & Teruskan ke Supervisi / Manager</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openModalById(modalId) {
+    const el = document.getElementById(modalId);
+    if (el) {
+        const modal = bootstrap.Modal.getOrCreateInstance(el);
+        modal.show();
+    }
+}
+</script>
+{% endblock %}

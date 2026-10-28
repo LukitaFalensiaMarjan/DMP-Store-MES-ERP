@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block navbar_center %}
+<div class="d-flex align-items-center">
+    <a href="{{ url_for('manager_financial_activity') }}" class="nav-link-custom">Info Bisnis</a>
+    <a href="{{ url_for('manager_financial_charts') }}" class="nav-link-custom">Grafik & Analisis AI</a>
+    <a href="{{ url_for('manager_procurement_approval') }}" class="nav-link-custom">Persetujuan Bahan Baku</a>
+    <a href="{{ url_for('manager_maintenance_approval') }}" class="nav-link-custom" style="color: #ff6f3c;">Persetujuan Maintenance</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 mb-4 text-white" style="background-color: #0f172a; border: 3px solid #0f172a; box-shadow: 6px 6px 0px #ff6f3c; border-radius: 10px;">
+    <span class="badge bg-warning text-dark border border-dark fw-bold mb-2">// CMMS EXECUTIVE APPROVAL</span>
+    <h3 class="fw-extrabold mb-1">Persetujuan Biaya Maintenance Mesin</h3>
+    <p class="small text-light opacity-75 mb-0">Tinjau dan setujui anggaran biaya perbaikan atau perawatan mesin yang diajukan oleh Teknisi.</p>
+</div>
+
+<div class="card p-4">
+    <h5 class="fw-extrabold mb-3 border-bottom pb-2">Daftar Pengajuan Biaya Maintenance</h5>
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle mb-0 small">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID Pengajuan</th>
+                    <th>Mesin</th>
+                    <th>Jenis Maintenance</th>
+                    <th>Durasi</th>
+                    <th>Estimasi Biaya</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Aksi / Keputusan</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for maint in maintenances %}
+                <tr>
+                    <td class="fw-bold font-monospace">{{ maint.request_id }}</td>
+                    <td class="fw-bold text-dark">{{ maint.machine_id }}</td>
+                    <td>{{ maint.maintenance_type }}</td>
+                    <td class="font-monospace">{{ maint.duration_hours }} Jam</td>
+                    <td class="fw-bold">Rp {{ "{:,.0f}".format(maint.estimated_cost) }}</td>
+                    <td class="text-center">
+                        <span class="badge {% if maint.status == 'Approved' %}bg-success{% else %}bg-warning text-dark{% endif %} border border-dark">
+                            {{ maint.status }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        {% if maint.status == 'Pending Manager Approval' %}
+                        <form method="POST" action="{{ url_for('approve_maintenance', request_id=maint.request_id) }}">
+                            <button type="submit" class="btn btn-good btn-sm w-100">Acc Biaya</button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted fw-bold">Disetujui</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4 font-monospace">TIDAK ADA PENGAJUAN MAINTENANCE.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

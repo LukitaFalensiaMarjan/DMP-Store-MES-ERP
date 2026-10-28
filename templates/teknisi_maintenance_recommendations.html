@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block navbar_center %}
+<div class="d-flex align-items-center">
+    <a href="{{ url_for('teknisi_work_orders') }}" class="nav-link-custom">Daftar Work Order</a>
+    <a href="{{ url_for('teknisi_machine_sensors') }}" class="nav-link-custom">Input Sensor Mesin</a>
+    <a href="{{ url_for('teknisi_maintenance_recommendations') }}" class="nav-link-custom" style="color: #ff6f3c;">Rekomendasi AI Mesin</a>
+    <a href="{{ url_for('teknisi_maintenance_requests') }}" class="nav-link-custom">Pengajuan Maintenance</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 mb-4 text-white" style="background-color: #0f172a; border: 3px solid #0f172a; box-shadow: 6px 6px 0px #ff6f3c; border-radius: 10px;">
+    <span class="badge bg-warning text-dark border border-dark fw-bold mb-2">// PREDICTIVE MAINTENANCE AI</span>
+    <h3 class="fw-extrabold mb-1">Rekomendasi Mesin yang Perlu di-Maintenance</h3>
+    <p class="small text-light opacity-75 mb-0">Daftar urutan mesin yang membutuhkan tindakan perawatan berdasarkan analisis AI terhadap kesehatan dan beban kerja.</p>
+</div>
+
+<div class="card p-4">
+    <h5 class="fw-extrabold mb-3 border-bottom pb-2">Urutan Prioritas Perawatan Mesin</h5>
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle mb-0 small">
+            <thead class="table-dark">
+                <tr>
+                    <th class="text-center">Peringkat</th>
+                    <th>Nama Mesin</th>
+                    <th class="text-center">Health Score</th>
+                    <th class="text-center">Beban Kerja (WO Aktif)</th>
+                    <th>Status Urgensi AI</th>
+                    <th class="text-center">Aksi Cepat</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mp in machine_priorities %}
+                <tr>
+                    <td class="fw-extrabold font-monospace text-center fs-6">#{{ loop.index }}</td>
+                    <td class="fw-bold text-dark">{{ mp.name }}</td>
+                    <td class="text-center">
+                        <span class="badge {% if mp.health_score > 80 %}bg-success{% elif mp.health_score > 60 %}bg-warning text-dark{% else %}bg-danger{% endif %} border border-dark">
+                            {{ mp.health_score }}%
+                        </span>
+                    </td>
+                    <td class="text-center font-monospace">{{ mp.active_load }} WO</td>
+                    <td>
+                        <span class="badge {% if mp.status_urgency == 'Darurat / Segera' %}bg-danger{% elif mp.status_urgency == 'Perlu Perhatian' %}bg-warning text-dark{% else %}bg-success{% endif %} border border-dark">
+                            {{ mp.status_urgency }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <a href="{{ url_for('teknisi_maintenance_requests') }}" class="btn btn-edit btn-sm">
+                            Ajukan Maintenance
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-5 col-lg-4">
+        <!-- Kartu Login Industrial Brutalism -->
+        <div class="card p-4 p-md-5 shadow-lg reveal-item" style="border: 3px solid #0f172a; border-radius: 12px; box-shadow: 6px 6px 0px #ff6f3c;">
+            
+            <div class="text-center mb-4">
+                <img src="/img/DMP Final.png" alt="DMP Store" style="max-height: 65px; width: auto; object-fit: contain;" class="mb-2">
+                <h4 class="fw-extrabold text-dark text-uppercase mt-2" style="letter-spacing: -0.5px;">Portal Manufaktur B2B</h4>
+                <p class="text-muted small mb-0">Silakan login sesuai peran (Role) akun Anda.</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-uppercase">Username</label>
+                    <input type="text" name="username" class="form-control form-control-sm rounded-0 border-dark py-2 fw-semibold" placeholder="Contoh: user1 / supervisi1" required autocomplete="username" autofocus>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-uppercase">Password</label>
+                    <input type="password" name="password" class="form-control form-control-sm rounded-0 border-dark py-2 fw-semibold" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn btn-industrial w-100 py-2 text-uppercase fw-bold">
+                    MASUK SISTEM
+                </button>
+            </form>
+
+            <div class="mt-4 pt-3 border-top text-center">
+                <small class="text-muted font-monospace" style="font-size: 11px;">
+                    <strong>Demo Akun Cepat (Pass: 12345):</strong><br>
+                    <span class="text-dark">user1</span> | <span class="text-dark">supervisi1</span> | <span class="text-dark">teknisi1</span> | <span class="text-dark">manager1</span>
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

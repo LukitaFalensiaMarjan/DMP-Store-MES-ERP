@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block navbar_center %}
+<div class="d-flex align-items-center">
+    <a href="{{ url_for('manager_financial_activity') }}" class="nav-link-custom" style="color: #ff6f3c;">Info Bisnis</a>
+    <a href="{{ url_for('manager_financial_charts') }}" class="nav-link-custom">Grafik & Analisis AI</a>
+    <a href="{{ url_for('manager_procurement_approval') }}" class="nav-link-custom">Persetujuan Bahan Baku</a>
+    <a href="{{ url_for('manager_maintenance_approval') }}" class="nav-link-custom">Persetujuan Maintenance</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 mb-4 text-white" style="background-color: #0f172a; border: 3px solid #0f172a; box-shadow: 6px 6px 0px #ff6f3c; border-radius: 10px;">
+    <span class="badge bg-warning text-dark border border-dark fw-bold mb-2">// ERP EXECUTIVE BUSINESS INTELLIGENCE</span>
+    <h3 class="fw-extrabold mb-1">Laporan Info Bisnis, Saldo Kas & Buku Besar Akuntansi</h3>
+    <p class="small text-light opacity-75 mb-0">Pantau likuiditas kas perusahaan, aset inventaris, valuasi pesanan manufaktur, serta rincian buku besar akuntansi real-time.</p>
+</div>
+
+<!-- 1. KARTU UTAMA LIKUIDITAS KAS & KEUANGAN (4 KOLOM) -->
+<div class="row g-3 mb-4">
+    <!-- Kas Perusahaan (Sinkron Dinamis) -->
+    <div class="col-sm-6 col-lg-3">
+        <div class="card p-3 h-100 border-2" style="border-color: #ff6f3c !important; background-color: #fff7ed; box-shadow: 4px 4px 0px #0f172a;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="text-uppercase small fw-extrabold" style="color: #c2410c; font-size: 11px;">UANG KAS PERUSAHAAN</span>
+                <span class="badge bg-warning text-dark border border-dark font-monospace" style="font-size: 10px;">SINKRON REAL-TIME</span>
+            </div>
+            <h3 class="fw-extrabold text-dark mb-1" style="font-size: 1.45rem;">Rp {{ "{:,.0f}".format(company_cash) }}</h3>
+            <div class="small text-muted font-monospace" style="font-size: 10.5px; line-height: 1.35;">
+                <div>Kas Awal: <strong>Rp {{ "{:,.0f}".format(base_capital_cash) }}</strong></div>
+                <div class="text-success fw-bold">+ Pemasukan: Rp {{ "{:,.0f}".format(total_sales_income) }}</div>
+                <div class="text-danger fw-bold">- Pengeluaran: Rp {{ "{:,.0f}".format(total_expense) }}</div>
+            </div>
+            <div class="mt-2 pt-1 border-top border-dark-subtle d-flex justify-content-between align-items-center">
+                <span class="badge bg-dark text-white font-monospace" style="font-size: 9px;">ARUS KAS OTOMATIS</span>
+                <button type="button" class="btn btn-outline-dark btn-sm py-0 px-2 font-monospace fw-bold" style="font-size: 10px;" data-bs-toggle="modal" data-bs-target="#editBaseCapitalModal" title="Ubah Modal Kas Awal Baseline">
+                    <i class="bi bi-pencil-square me-1"></i> Atur Kas Awal
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Total Penjualan -->
+    <div class="col-sm-6 col-lg-3">
+        <div class="card p-3 h-100 border-2 border-dark" style="background-color: #dcfce7; box-shadow: 4px 4px 0px #0f172a;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="text-uppercase small fw-extrabold text-success" style="font-size: 11px;">TOTAL PENJUALAN (OMSET)</span>
+                <span class="badge bg-success border border-dark" style="font-size: 10px;">{{ completed_orders_count }} ORDER</span>
+            </div>
+            <h3 class="fw-extrabold text-dark mb-1" style="font-size: 1.45rem;">Rp {{ "{:,.0f}".format(total_sales_income) }}</h3>
+            <small class="text-muted" style="font-size: 11px;">Total dari {{ "{:,.0f}".format(total_units_sold) }} pcs produk terjual</small>
+        </div>
+    </div>
+    <!-- Total Pengeluaran -->
+    <div class="col-sm-6 col-lg-3">
+        <div class="card p-3 h-100 border-2 border-dark" style="background-color: #fee2e2; box-shadow: 4px 4px 0px #0f172a;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="text-uppercase small fw-extrabold text-danger" style="font-size: 11px;">TOTAL PENGELUARAN</span>
+                <span class="badge bg-danger border border-dark" style="font-size: 10px;">EXPENSE</span>
+            </div>
+            <h3 class="fw-extrabold text-dark mb-1" style="font-size: 1.45rem;">Rp {{ "{:,.0f}".format(total_expense) }}</h3>
+            <small class="text-muted" style="font-size: 11px;">Bahan baku & maintenance mesin</small>
+        </div>
+    </div>
+    <!-- Laba Bersih -->
+    <div class="col-sm-6 col-lg-3">
+        <div class="card p-3 h-100 border-2 border-dark" style="background-color: #e0f2fe; box-shadow: 4px 4px 0px #0f172a;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="text-uppercase small fw-extrabold text-primary" style="font-size: 11px;">LABA BERSIH (PROFIT)</span>
+                <span class="badge bg-primary border border-dark" style="font-size: 10px;">MARGIN {{ gross_margin_pct }}%</span>
+            </div>
+            <h3 class="fw-extrabold text-dark mb-1" style="font-size: 1.45rem;">Rp {{ "{:,.0f}".format(net_profit) }}</h3>
+            <small class="text-muted" style="font-size: 11px;">Net profit operasional berjalan</small>
+        </div>
+    </div>
+</div>
+
+<!-- 2. INDIKATOR BISNIS & VALUASI ASET LENGKAP -->
+<div class="card p-3 mb-4 border-2 border-dark" style="box-shadow: 5px 5px 0px #0f172a;">
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+        <h6 class="fw-extrabold text-dark mb-0"><i class="bi bi-pin-angle me-2"></i>Ringkasan Parameter & Valuasi Bisnis Manufaktur</h6>
+        <span class="badge bg-dark">LENGKAP REAL-TIME</span>
+    </div>
+    <div class="row g-3 text-center text-sm-start">
+        <div class="col-6 col-md-3 border-end border-dark">
+            <span class="small text-muted fw-bold d-block"><i class="bi bi-box-seam me-1"></i> Valuasi Stok Bahan Baku:</span>
+            <span class="fs-6 fw-extrabold text-dark">Rp {{ "{:,.0f}".format(inventory_valuation) }}</span>
+            <div class="text-muted" style="font-size: 11px;">Stok 11 bahan di gudang</div>
+        </div>
+        <div class="col-6 col-md-3 border-end border-dark">
+            <span class="small text-muted fw-bold d-block"><i class="bi bi-hourglass-split me-1"></i> Pesanan Aktif (WIP):</span>
+            <span class="fs-6 fw-extrabold text-primary">Rp {{ "{:,.0f}".format(active_wip_value) }}</span>
+            <div class="text-muted" style="font-size: 11px;">Work in Progress lini pabrik</div>
+        </div>
+        <div class="col-6 col-md-3 border-end border-dark">
+            <span class="small text-muted fw-bold d-block"><i class="bi bi-cash-stack me-1"></i> Estimasi Aset Lancar:</span>
+            <span class="fs-6 fw-extrabold text-success">Rp {{ "{:,.0f}".format(total_liquid_assets) }}</span>
+            <div class="text-muted" style="font-size: 11px;">Kas + Bahan + WIP</div>
+        </div>
+        <div class="col-6 col-md-3">
+            <span class="small text-muted fw-bold d-block"><i class="bi bi-graph-up me-1"></i> Rata-rata Nilai Order:</span>
+            <span class="fs-6 fw-extrabold text-dark">Rp {{ "{:,.0f}".format(avg_order_value) }}</span>
+            <div class="text-muted" style="font-size: 11px;">AOV per transaksi tuntas</div>
+        </div>
+    </div>
+</div>
+
+<!-- Navigasi Tab Kategori Aktivitas -->
+<div class="card p-4">
+    <ul class="nav nav-tabs fw-bold mb-3" id="finTab" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active text-dark" data-bs-toggle="tab" data-bs-target="#allTab">Semua Aktivitas</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link text-success" data-bs-toggle="tab" data-bs-target="#salesTab">Hasil Penjualan ({{ sales_records|length }})</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link text-danger" data-bs-toggle="tab" data-bs-target="#maintTab">Maintenance Mesin ({{ maintenance_records|length }})</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link text-warning text-dark" data-bs-toggle="tab" data-bs-target="#materialTab">Bahan Baku ({{ material_records|length }})</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Tab 1: Semua -->
+        <div class="tab-pane fade show active" id="allTab">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0 small">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Waktu Transaksi</th>
+                            <th>Kategori</th>
+                            <th>Keterangan Detail</th>
+                            <th class="text-end">Nominal (Rp)</th>
+                            <th class="text-end">Saldo Kas Berjalan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in financial_records %}
+                        <tr style="cursor: pointer;" onclick="openGeneralLedger('{{ f.date }}', '{{ f.description }}', '{{ f.type }}', '{{ f.amount }}', '{{ f.running_balance }}')">
+                            <td class="font-monospace text-nowrap">{{ f.date }}</td>
+                            <td>
+                                {% if f.type == 'Income' %}
+                                    <span class="badge bg-success border border-dark">PENJUALAN</span>
+                                {% elif 'Maintenance' in f.description %}
+                                    <span class="badge bg-danger border border-dark">MAINTENANCE</span>
+                                {% elif 'Bahan Baku' in f.description %}
+                                    <span class="badge bg-warning text-dark border border-dark">BAHAN BAKU</span>
+                                {% else %}
+                                    <span class="badge bg-secondary border border-dark">BIAYA PRODUKSI</span>
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold text-dark">{{ f.description }} <small class="text-muted fw-normal">(Klik Buku Besar)</small></td>
+                            <td class="text-end fw-extrabold {% if f.type == 'Income' %}text-success{% else %}text-danger{% endif %} text-nowrap">
+                                {% if f.type == 'Income' %}+{% else %}-{% endif %} Rp {{ "{:,.0f}".format(f.amount) }}
+                            </td>
+                            <td class="text-end font-monospace fw-bold text-dark text-nowrap">
+                                Rp {{ "{:,.0f}".format(f.running_balance) }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Tab 2: Penjualan -->
+        <div class="tab-pane fade" id="salesTab">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0 small">
+                    <thead class="table-dark">
+                        <tr><th>Waktu</th><th>Keterangan Penjualan</th><th class="text-end">Jumlah (Rp)</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for f in sales_records %}
+                        <tr style="cursor: pointer;" onclick="openGeneralLedger('{{ f.date }}', '{{ f.description }}', '{{ f.type }}', '{{ f.amount }}', '{{ f.running_balance }}')">
+                            <td class="font-monospace">{{ f.date }}</td>
+                            <td class="fw-bold">{{ f.description }}</td>
+                            <td class="text-end fw-bold text-success">+ Rp {{ "{:,.0f}".format(f.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Tab 3: Maintenance -->
+        <div class="tab-pane fade" id="maintTab">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0 small">
+                    <thead class="table-dark">
+                        <tr><th>Waktu</th><th>Keterangan Maintenance</th><th class="text-end">Jumlah (Rp)</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for f in maintenance_records %}
+                        <tr style="cursor: pointer;" onclick="openGeneralLedger('{{ f.date }}', '{{ f.description }}', '{{ f.type }}', '{{ f.amount }}', '{{ f.running_balance }}')">
+                            <td class="font-monospace">{{ f.date }}</td>
+                            <td class="fw-bold">{{ f.description }}</td>
+                            <td class="text-end fw-bold text-danger">- Rp {{ "{:,.0f}".format(f.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Tab 4: Bahan Baku -->
+        <div class="tab-pane fade" id="materialTab">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle mb-0 small">
+                    <thead class="table-dark">
+                        <tr><th>Waktu</th><th>Keterangan Pembelian Bahan Baku</th><th class="text-end">Jumlah (Rp)</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for f in material_records %}
+                        <tr style="cursor: pointer;" onclick="openGeneralLedger('{{ f.date }}', '{{ f.description }}', '{{ f.type }}', '{{ f.amount }}', '{{ f.running_balance }}')">
+                            <td class="font-monospace">{{ f.date }}</td>
+                            <td class="fw-bold">{{ f.description }}</td>
+                            <td class="text-end fw-bold text-danger">- Rp {{ "{:,.0f}".format(f.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL BUKU BESAR AKUNTANSI (GENERAL LEDGER) ================= -->
+<div class="modal fade" id="glModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 10px;">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold">BUKU BESAR AKUNTANSI (GENERAL LEDGER)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center align-middle bg-white small" style="border: 2px solid #0f172a;">
+                        <thead class="table-primary text-dark fw-bold">
+                            <tr>
+                                <th rowspan="2" class="align-middle">Date</th>
+                                <th rowspan="2" class="align-middle">Description</th>
+                                <th rowspan="2" class="align-middle">Ref</th>
+                                <th rowspan="2" class="align-middle">Debit</th>
+                                <th rowspan="2" class="align-middle">Credit</th>
+                                <th colspan="2">Balance</th>
+                            </tr>
+                            <tr>
+                                <th>Debit</th>
+                                <th>Credit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td id="glDate" class="font-monospace"></td>
+                                <td id="glDesc" class="fw-bold text-start"></td>
+                                <td>1</td>
+                                <td id="glDebit" class="text-end"></td>
+                                <td id="glCredit" class="text-end"></td>
+                                <td id="glBalDebit" class="text-end fw-bold"></td>
+                                <td id="glBalCredit" class="text-end">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="small text-muted mt-2 font-monospace">
+                    * Catatan akuntansi resmi tervalidasi otomatis oleh sistem ERP Manufaktur DMP Store.
+                </div>
+            </div>
+            <div class="modal-footer bg-white border-top border-dark">
+                <button type="button" class="btn btn-dark btn-sm fw-bold" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL SESUAIKAN MODAL KAS AWAL PERUSAHAAN -->
+<div class="modal fade" id="editBaseCapitalModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 10px; box-shadow: 6px 6px 0px #0f172a;">
+            <form method="POST" action="{{ url_for('update_base_capital') }}">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-sliders me-2"></i>SESUAIKAN MODAL KAS AWAL PERUSAHAAN</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    <p class="small text-muted mb-3">
+                        Tentukan modal kas awal (baseline) perusahaan. Uang kas saat ini akan secara otomatis dihitung dan disinkronkan secara real-time berdasarkan rumus: 
+                        <br><strong>Kas Saat Ini = Modal Kas Awal + Total Pemasukan - Total Pengeluaran</strong>.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Nominal Modal Kas Awal (Rp)</label>
+                        <input type="number" step="1000" name="base_capital_cash" class="form-control border-dark font-monospace fw-bold" value="{{ "{:.0f}".format(base_capital_cash) }}" required>
+                        <small class="text-muted" style="font-size: 11px;">Default baseline: Rp 3.870.233.000</small>
+                    </div>
+                    <div class="p-3 bg-white border border-dark rounded small">
+                        <div class="fw-bold mb-1">Simulasi Arus Kas Berjalan Saat Ini:</div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Total Pemasukan (Omset Penjualan):</span>
+                            <strong class="text-success">+ Rp {{ "{:,.0f}".format(total_sales_income) }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Total Beban Pengeluaran:</span>
+                            <strong class="text-danger">- Rp {{ "{:,.0f}".format(total_expense) }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between pt-1 border-top border-dark-subtle fw-bold">
+                            <span>Laba Bersih Akumulatif:</span>
+                            <strong class="text-primary">+ Rp {{ "{:,.0f}".format(net_profit) }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top border-dark">
+                    <button type="button" class="btn btn-outline-dark fw-bold btn-sm" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-good btn-sm fw-bold">Simpan & Sinkronkan Kas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openGeneralLedger(date, description, type, amount, runningBalance) {
+    const formattedAmount = parseInt(amount).toLocaleString('id-ID');
+    const formattedBalance = runningBalance ? parseInt(runningBalance).toLocaleString('id-ID') : formattedAmount;
+    document.getElementById("glDate").innerText = date;
+    document.getElementById("glDesc").innerText = description;
+    
+    if (type === 'Income') {
+        document.getElementById("glDebit").innerText = "Rp " + formattedAmount;
+        document.getElementById("glCredit").innerText = "-";
+        document.getElementById("glBalDebit").innerText = "Rp " + formattedBalance;
+    } else {
+        document.getElementById("glDebit").innerText = "-";
+        document.getElementById("glCredit").innerText = "Rp " + formattedAmount;
+        document.getElementById("glBalDebit").innerText = "Rp " + formattedBalance;
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById("glModal"));
+    modal.show();
+}
+</script>
+{% endblock %}

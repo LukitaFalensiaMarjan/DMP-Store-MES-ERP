@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Kartu Statistik Keuangan -->
+    <div class="col-md-4">
+        <div class="card p-3 bg-success text-white">
+            <h6 class="text-uppercase small fw-bold">Total Pendapatan (Income)</h6>
+            <h3 class="fw-bold mb-0">Rp {{ "{:,.0f}".format(total_income) }}</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 bg-danger text-white">
+            <h6 class="text-uppercase small fw-bold">Total Pengeluaran (Expense)</h6>
+            <h3 class="fw-bold mb-0">Rp {{ "{:,.0f}".format(total_expense) }}</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 bg-primary text-white">
+            <h6 class="text-uppercase small fw-bold">Saldo Bersih Perusahaan</h6>
+            <h3 class="fw-bold mb-0">Rp {{ "{:,.0f}".format(total_income - total_expense) }}</h3>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Bagian 1: Verifikasi Pengadaan Bahan Baku (Procurement) -->
+    <div class="col-lg-6">
+        <div class="card p-4 mb-4">
+            <h5 class="fw-bold mb-3">Persetujuan Pengadaan Bahan Baku</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Bahan & Jumlah</th>
+                            <th>Estimasi Biaya</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pr in procurements %}
+                        <tr>
+                            <td class="fw-bold">{{ pr.request_id }}</td>
+                            <td>
+                                {{ pr.material_name }}<br>
+                                <strong>{{ "{:,.0f}".format(pr.quantity_kg) }} kg</strong>
+                            </td>
+                            <td>Rp {{ "{:,.0f}".format(pr.estimated_cost) }}</td>
+                            <td>
+                                <span class="badge {% if pr.status == 'Pending Approval' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                    {{ pr.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if pr.status == 'Pending Approval' %}
+                                <form method="POST" action="{{ url_for('approve_procurement', request_id=pr.request_id) }}">
+                                    <button type="submit" class="btn btn-success btn-sm w-100">Acc Pembelian</button>
+                                </form>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">Tidak ada pengajuan pembelian bahan baku.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bagian 2: Verifikasi Biaya Maintenance Mesin (CMMS) -->
+    <div class="col-lg-6">
+        <div class="card p-4 mb-4">
+            <h5 class="fw-bold mb-3">Persetujuan Biaya Maintenance Mesin</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Mesin & Tipe</th>
+                            <th>Durasi & Biaya</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for maint in maintenances %}
+                        <tr>
+                            <td class="fw-bold">{{ maint.request_id }}</td>
+                            <td>
+                                Mesin: {{ maint.machine_id }}<br>
+                                <strong>{{ maint.maintenance_type }}</strong>
+                            </td>
+                            <td>
+                                {{ maint.duration_hours }} Jam<br>
+                                Rp {{ "{:,.0f}".format(maint.estimated_cost) }}
+                            </td>
+                            <td>
+                                <span class="badge {% if maint.status == 'Pending Manager Approval' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                    {{ maint.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if maint.status == 'Pending Manager Approval' %}
+                                <form method="POST" action="{{ url_for('approve_maintenance', request_id=maint.request_id) }}">
+                                    <button type="submit" class="btn btn-success btn-sm w-100">Acc Biaya</button>
+                                </form>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">Tidak ada pengajuan maintenance.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bagian 3: Riwayat Arus Kas Keuangan (Financial Report) -->
+    <div class="col-12">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3">Laporan Arus Kas & Keuangan Perusahaan (ERP)</h5>
+            <div class="table-responsive">
+                <table class="table table-striped align-middle mb-0 small">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Waktu / Tanggal</th>
+                            <th>Jenis Transaksi</th>
+                            <th>Keterangan</th>
+                            <th>Nominal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in financial_records %}
+                        <tr>
+                            <td>{{ f.date }}</td>
+                            <td>
+                                {% if f.type == 'Income' %}
+                                    <span class="badge bg-success">Pemasukan (Income)</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Pengeluaran (Expense)</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ f.description }}</td>
+                            <td class="fw-bold {% if f.type == 'Income' %}text-success{% else %}text-danger{% endif %}">
+                                {% if f.type == 'Income' %}+{% else %}-{% endif %} Rp {{ "{:,.0f}".format(f.amount) }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-3">Belum ada catatan transaksi keuangan.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

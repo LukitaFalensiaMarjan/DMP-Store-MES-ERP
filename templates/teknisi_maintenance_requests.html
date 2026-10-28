@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block navbar_center %}
+<div class="d-flex align-items-center">
+    <a href="{{ url_for('teknisi_work_orders') }}" class="nav-link-custom">Daftar Work Order</a>
+    <a href="{{ url_for('teknisi_machine_sensors') }}" class="nav-link-custom">Input Sensor Mesin</a>
+    <a href="{{ url_for('teknisi_maintenance_recommendations') }}" class="nav-link-custom">Rekomendasi AI Mesin</a>
+    <a href="{{ url_for('teknisi_maintenance_requests') }}" class="nav-link-custom" style="color: #ff6f3c;">Pengajuan Maintenance</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 mb-4 text-white" style="background-color: #0f172a; border: 3px solid #0f172a; box-shadow: 6px 6px 0px #ff6f3c; border-radius: 10px;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center">
+        <div>
+            <span class="badge bg-warning text-dark border border-dark fw-bold mb-2">// CMMS (COMPUTERIZED MAINTENANCE MANAGEMENT)</span>
+            <h3 class="fw-extrabold mb-1">Riwayat & Pengajuan Perawatan Mesin</h3>
+            <p class="small text-light opacity-75 mb-0">Ajukan perbaikan atau perawatan berkala ke Manager dan Supervisi melalui pop-up formulir.</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <!-- Tombol untuk Membuka Pop-Up Form Pengajuan Maintenance -->
+            <button type="button" class="btn btn-good fw-bold px-4 py-2" data-bs-toggle="modal" data-bs-target="#maintenanceModal">
+                + Buat Pengajuan Maintenance Baru
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="card p-4">
+    <h5 class="fw-extrabold mb-3 border-bottom pb-2">Daftar Pengajuan Perawatan & Perbaikan</h5>
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle mb-0 small">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID Pengajuan</th>
+                    <th>Mesin</th>
+                    <th>Jenis Maintenance</th>
+                    <th>Estimasi Durasi</th>
+                    <th>Estimasi Biaya</th>
+                    <th>Tanggal</th>
+                    <th class="text-center">Status Persetujuan</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for maint in maintenance_list %}
+                <tr>
+                    <td class="fw-bold font-monospace">{{ maint.request_id }}</td>
+                    <td class="fw-semibold">{{ maint.machine_id }}</td>
+                    <td class="fw-bold text-dark">{{ maint.maintenance_type }}</td>
+                    <td class="font-monospace">{{ maint.duration_hours }} Jam</td>
+                    <td class="fw-bold">Rp {{ "{:,.0f}".format(maint.estimated_cost) }}</td>
+                    <td class="font-monospace">{{ maint.date }}</td>
+                    <td class="text-center">
+                        <span class="badge {% if maint.status == 'Approved' %}bg-success{% else %}bg-warning text-dark{% endif %} border border-dark">
+                            {{ maint.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4 font-monospace">BELUM ADA PENGAJUAN MAINTENANCE.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ================= POP-UP MODAL FORM PENGAJUAN MAINTENANCE ================= -->
+<div class="modal fade" id="maintenanceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 10px;">
+            <form method="POST" action="{{ url_for('request_maintenance') }}">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold">FORM PENGAJUAN MAINTENANCE MESIN</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light small">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Pilih Mesin / Aset</label>
+                        <select name="machine_id" class="form-select border-dark" required>
+                            {% for m in machines %}
+                            <option value="{{ m.machine_id }}">{{ m.machine_id }} - {{ m.name }} (Kesehatan: {{ m.health_score }}%)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Jenis Perawatan (Maintenance Type)</label>
+                        <select name="maintenance_type" class="form-select border-dark" required>
+                            <option value="Preventive Maintenance">Preventive Maintenance (Perawatan Berkala)</option>
+                            <option value="Corrective / Repair">Corrective / Repair (Perbaikan Kerusakan)</option>
+                            <option value="Overhaul">Overhaul (Turun Mesin Total)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Estimasi Durasi Pengerjaan (Jam)</label>
+                        <input type="number" name="duration_hours" class="form-control border-dark" placeholder="Contoh: 4" min="1" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Estimasi Biaya Perbaikan (Rp)</label>
+                        <input type="number" name="estimated_cost" class="form-control border-dark" placeholder="Contoh: 1500000" min="0" required>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top border-dark">
+                    <button type="button" class="btn btn-outline-dark fw-bold" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-good">Kirim Pengajuan ke Manager</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

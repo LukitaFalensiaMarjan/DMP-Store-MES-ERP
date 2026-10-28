@@ -1,0 +1,1615 @@
+{% extends "base.html" %}
+
+{% block navbar_center %}
+<div class="d-none d-md-flex align-items-center">
+    <a href="#heroSection" class="nav-link-custom">Beranda</a>
+    <a href="#koleksiSection" class="nav-link-custom">Koleksi</a>
+    <a href="#katalogSection" class="nav-link-custom">Katalog Produk</a>
+    <a href="#keunggulanSection" class="nav-link-custom">Keunggulan</a>
+</div>
+{% endblock %}
+
+{% block navbar_icons %}
+<!-- Tombol Chat (Logo sesuai Gambar 2) -->
+<button type="button" class="icon-btn-nav" data-bs-toggle="modal" data-bs-target="#chatModal" title="Chat Supervisi">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 9h8a4 4 0 0 1 4 4v2a4 4 0 0 1-4 4h-5l-4 3v-3H6a4 4 0 0 1-4-4v-2a4 4 0 0 1 4-4z"/>
+        <path d="M10 9V6a3 3 0 0 1 3-3h5l3-2v2h1a3 3 0 0 1 3 3v3a3 3 0 0 1-3 3h-2"/>
+        <circle cx="8" cy="14" r="1" fill="currentColor"/>
+        <circle cx="11" cy="14" r="1" fill="currentColor"/>
+        <circle cx="14" cy="14" r="1" fill="currentColor"/>
+    </svg>
+</button>
+
+<!-- Tombol Tracking Progres Pesanan (Icon seperti Chat/Tracking) -->
+{% set rejected_orders = my_orders | selectattr('status', 'in', ['Rejected', 'Rejected by Manager', 'Rejected by Supervisor', 'Rejected by Technician', 'Cancelled by Technician']) | list %}
+{% set active_orders = my_orders | selectattr('status', 'in', ['Pending Manager Approval', 'Approved by Manager', 'Pending', 'Approved', 'In Production']) | list %}
+<button type="button" class="icon-btn-nav position-relative" data-bs-toggle="modal" data-bs-target="#orderProgressModal" title="Tracking Progres Order">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+        <path d="M9 14l2 2 4-4"></path>
+        <line x1="9" y1="10" x2="15" y2="10"></line>
+    </svg>
+    {% if rejected_orders|length > 0 %}
+        <span class="icon-badge bg-danger text-white" title="{{ rejected_orders|length }} order perlu disesuaikan">{{ rejected_orders|length }}</span>
+    {% elif active_orders|length > 0 %}
+        <span class="icon-badge" style="background-color: #ff6f3c;">{{ active_orders|length }}</span>
+    {% endif %}
+</button>
+
+<!-- Tombol Riwayat Pesanan (Tanpa Angka Jumlah Order) -->
+<button type="button" class="icon-btn-nav" data-bs-toggle="modal" data-bs-target="#historyModal" title="Riwayat & Status Pesanan">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5"/>
+        <path d="M12 7v5l-3 3"/>
+    </svg>
+</button>
+
+<!-- Tombol Keranjang Belanja (Tetap ada angka jumlah item keranjang) -->
+<button type="button" class="icon-btn-nav" data-bs-toggle="modal" data-bs-target="#cartModal" title="Keranjang Belanja & Checkout">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="20" r="1.8" fill="currentColor"/>
+        <circle cx="18" cy="20" r="1.8" fill="currentColor"/>
+        <path d="M2 3h3.5l2.2 12h11.3l2-9H6.2"/>
+        <line x1="7" y1="10.5" x2="19.8" y2="10.5"/>
+        <line x1="11" y1="6" x2="11" y2="15"/>
+        <line x1="15.5" y1="6" x2="15.5" y2="15"/>
+    </svg>
+    <span id="navCartBadge" class="icon-badge {% if cart|length == 0 %}d-none{% endif %}">{{ cart|length }}</span>
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- ALERT PEMBERITAHUAN ORDER DITOLAK -->
+{% set rejected_orders = my_orders | selectattr('status', 'in', ['Rejected', 'Rejected by Manager', 'Rejected by Supervisor', 'Rejected by Technician', 'Cancelled by Technician']) | list %}
+{% if rejected_orders %}
+<div class="alert alert-danger border border-dark p-3 mb-4 rounded-3 d-flex align-items-center justify-content-between flex-wrap gap-3" style="border: 3px solid #0f172a !important; box-shadow: 5px 5px 0px #0f172a; background-color: #fef2f2;">
+    <div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-danger border border-dark fs-6 px-2 py-1">PEMBERITAHUAN ORDER DITOLAK</span>
+            <span class="fw-extrabold text-danger fs-6">{{ rejected_orders|length }} Pesanan Membutuhkan Tindakan Anda</span>
+        </div>
+        <p class="mb-0 small text-dark mt-1">
+            Pesanan Anda ditolak oleh Manajemen / Supervisi / Teknisi. Anda dapat <strong>menyesuaikan (edit) jumlah & target tanggal</strong> atau <strong>membatalkan orderan</strong> tersebut.
+        </p>
+    </div>
+    <div>
+        <button type="button" class="btn btn-dark btn-sm fw-bold px-3 py-2 border-2" data-bs-toggle="modal" data-bs-target="#orderProgressModal">
+            Lihat Progres & Selesaikan Sekarang →
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<!-- 1. HERO BANNER SECTION (Sesuai Struktur Atas Gambar 1) -->
+<div id="heroSection" class="card p-4 p-lg-5 mb-4 text-white overflow-hidden" style="background: linear-gradient(135deg, #0f172a 0%, #1e3d59 100%); border: 3px solid #0f172a; box-shadow: 6px 6px 0px #ff6f3c;">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-6">
+            <span class="badge bg-warning text-dark border border-dark fw-bold mb-3 px-3 py-2">
+                // GOOD FORMULATION. GOOD BUSINESS.
+            </span>
+            <h1 class="display-5 fw-extrabold mb-3" style="font-weight: 800; line-height: 1.15;">
+                Tingkatkan Kualitas Produk <span style="color: #ff6f3c;">Skincare & Sabun</span> Brand Anda
+            </h1>
+            <p class="text-light opacity-75 mb-4">
+                Diproses langsung oleh lini mesin industri DMP Store dengan takaran bahan baku presisi, kontrol sensor ketat, dan estimasi jadwal produksi berbasis AI.
+            </p>
+            <div class="d-flex gap-3">
+                <a href="#katalogSection" class="btn btn-industrial px-4 py-2">Belanja Sekarang</a>
+                <button type="button" class="btn btn-outline-light fw-bold px-4 py-2 border-2" data-bs-toggle="modal" data-bs-target="#cartModal">
+                    Lihat Keranjang (<span class="cart-count-text">{{ cart|length }}</span>)
+                </button>
+            </div>
+        </div>
+        <div class="col-lg-6 text-center">
+            <div class="p-3 bg-white d-inline-block" style="border: 3px solid #0f172a; box-shadow: 5px 5px 0px #ff6f3c; border-radius: 12px;">
+                <img src="/img/DMP Final.png" alt="DMP Store Manufacturing" class="img-fluid" style="max-height: 220px; object-fit: contain;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. EMPAT IKON FITUR / TRUST BAR (Sesuai Baris Ikon di Bawah Hero Gambar 1) -->
+<div class="card p-4 mb-5 bg-white">
+    <div class="row text-center g-4">
+        <div class="col-6 col-md-3 border-end border-dark">
+            <div class="fw-extrabold mb-1" style="color: #ff6f3c; font-size: 1.1rem;">[ PENGIRIMAN ]</div>
+            <h6 class="fw-bold mb-1">Logistik Terjadwal</h6>
+            <p class="text-muted small mb-0">Pengiriman aman langsung dari pabrik</p>
+        </div>
+        <div class="col-6 col-md-3 border-end border-dark">
+            <div class="fw-extrabold mb-1" style="color: #ff6f3c; font-size: 1.1rem;">[ BAHAN BAKU ]</div>
+            <h6 class="fw-bold mb-1">100% Grade Industri</h6>
+            <p class="text-muted small mb-0">Niacinamide, Charcoal & Aloe murni</p>
+        </div>
+        <div class="col-6 col-md-3 border-end border-dark">
+            <div class="fw-extrabold mb-1" style="color: #ff6f3c; font-size: 1.1rem;">[ AI SISTEM ]</div>
+            <h6 class="fw-bold mb-1">Prediksi ETA Akurat</h6>
+            <p class="text-muted small mb-0">Kalkulasi beban mesin & stok otomatis</p>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="fw-extrabold mb-1" style="color: #ff6f3c; font-size: 1.1rem;">[ SUPPORT 24/7 ]</div>
+            <h6 class="fw-bold mb-1">Supervisi & Chatbot</h6>
+            <p class="text-muted small mb-0">Konsultasi MOQ dan status produksi</p>
+        </div>
+    </div>
+</div>
+
+<!-- 3. DUA KARTU KOLEKSI UNGGULAN (Sesuai 2 Promo Card Berdampingan di Gambar 1) -->
+<div id="koleksiSection" class="row g-4 mb-5">
+    <div class="col-md-6">
+        <div class="card p-4 h-100" style="background-color: #e0f2fe;">
+            <div class="row align-items-center">
+                <div class="col-7">
+                    <span class="badge bg-dark text-white mb-2">FORMULASI AKTIF</span>
+                    <h4 class="fw-extrabold text-dark mb-2">Koleksi Skincare Pria</h4>
+                    <p class="small text-muted mb-3">Facial wash charcoal dan serum pengontrol minyak berlebih untuk pria.</p>
+                    <a href="#katalogSection" class="btn btn-dark btn-sm fw-bold px-3">Pesan Koleksi</a>
+                </div>
+                <div class="col-5 text-end">
+                    <img src="/img/DMP_FacialWashMen.jpg.jpeg" class="img-fluid rounded border border-dark border-2 bg-white" style="height: 140px; width: 100%; object-fit: cover;" alt="Men Skincare">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-4 h-100" style="background-color: #ffedd5;">
+            <div class="row align-items-center">
+                <div class="col-7">
+                    <span class="badge bg-dark text-white mb-2">PERAWATAN KULIT</span>
+                    <h4 class="fw-extrabold text-dark mb-2">Koleksi Sabun & Gel</h4>
+                    <p class="small text-muted mb-3">Sabun batang pencerah wajah dan body wash ekstrak lidah buaya lembut.</p>
+                    <a href="#katalogSection" class="btn btn-industrial btn-sm fw-bold px-3">Pesan Koleksi</a>
+                </div>
+                <div class="col-5 text-end">
+                    <img src="/img/DMP_SoapWomen.jpg.jpeg" class="img-fluid rounded border border-dark border-2 bg-white" style="height: 140px; width: 100%; object-fit: cover;" alt="Soap Collection">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 4. OUR BEST SELLERS / KATALOG PRODUK 4 KOLOM (Sesuai Struktur Gambar 1) -->
+<div id="katalogSection" class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-extrabold mb-0">Katalog Produk Unggulan</h3>
+            <p class="text-muted small mb-0">Pilih beberapa produk sekaligus ke dalam keranjang sebelum melakukan checkout Work Order.</p>
+        </div>
+        <button class="btn btn-outline-dark btn-sm fw-bold border-2" data-bs-toggle="modal" data-bs-target="#cartModal">
+            Buka Keranjang (<span class="cart-count-text">{{ cart|length }}</span>)
+        </button>
+    </div>
+
+    <div class="row g-4">
+        {% for p in products %}
+        <div class="col-sm-6 col-lg-3">
+            <div class="card h-100 p-3 d-flex flex-column justify-content-between">
+                <div>
+                    <div class="position-relative mb-3 rounded overflow-hidden bg-white d-flex align-items-center justify-content-center" style="aspect-ratio: 1 / 1; width: 100%; border: 2px solid #0f172a;">
+                        <img src="{{ p.image_url }}" alt="{{ p.name }}" class="w-100 h-100" style="object-fit: cover; transition: transform 0.3s ease;">
+                        <span class="position-absolute top-0 start-0 badge bg-dark m-2 font-monospace border border-light" style="font-size: 11px;">{{ p.product_id }}</span>
+                    </div>
+                    <div class="small fw-bold text-uppercase mb-1" style="color: #ff6f3c; font-size: 11px;">{{ p.category }}</div>
+                    <h6 class="fw-extrabold text-dark mb-1">{{ p.name }}</h6>
+                    <p class="text-muted small mb-2" style="font-size: 12px;">{{ p.description }}</p>
+                </div>
+
+                <div class="pt-2 border-top border-dark">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-extrabold fs-6 text-dark">Rp {{ "{:,.0f}".format(p.price_per_pcs) }}<small class="text-muted fw-normal">/pcs</small></span>
+                        <span class="badge bg-warning text-dark border border-dark">MOQ: {{ p.min_order }}</span>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('add_to_cart') }}" class="add-to-cart-form" onsubmit="return handleAddToCart(event, this);">
+                        <input type="hidden" name="product_id" value="{{ p.product_id }}">
+                        <div class="input-group input-group-sm mb-2">
+                            <span class="input-group-text bg-dark text-white fw-bold border-dark">Qty</span>
+                            <input type="number" name="quantity" class="form-control border-dark fw-bold text-center" value="{{ p.min_order }}" min="{{ p.min_order }}" step="50" required>
+                        </div>
+                        <button type="submit" class="btn btn-industrial btn-sm w-100 py-2">
+                            + Masukkan Keranjang
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 5. WIDE PROMO BANNER (Sesuai Banner Tengah "Summer Sale" di Gambar 1) -->
+<div class="card p-4 p-md-5 mb-5 text-white" style="background-color: #1e3d59; border: 3px solid #0f172a; box-shadow: 6px 6px 0px #0f172a;">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <span class="badge bg-warning text-dark border border-dark fw-bold mb-2">KAPASITAS PABRIK SKALA BESAR</span>
+            <h3 class="fw-extrabold mb-2">Siap Produksi Massal untuk Brand Anda</h3>
+            <p class="mb-3 opacity-85 small">
+                Gabungkan beberapa varian sabun dan skincare dalam satu kali checkout. Sistem MES dan ERP kami langsung menjadwalkan lini mesin terbaik untuk pesanan Anda.
+            </p>
+            <button class="btn btn-industrial btn-sm px-4 py-2" data-bs-toggle="modal" data-bs-target="#cartModal">
+                Checkout Keranjang Sekarang
+            </button>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <div class="p-3 bg-dark rounded border border-warning d-inline-block text-start">
+                <div class="small text-warning fw-bold">STATUS LINI MESIN</div>
+                <div class="fs-4 fw-extrabold text-white">3 Lini Aktif</div>
+                <div class="small text-light opacity-75">Liquid, Solid Soap & Serum Line</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 6. WHY CHOOSE DMP STORE (Sesuai Bagian Bawah Gambar 1) -->
+<div id="keunggulanSection" class="text-center mb-5">
+    <h4 class="fw-extrabold mb-4">Mengapa Memilih Manufaktur DMP Store?</h4>
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card p-3 h-100">
+                <div class="fw-extrabold fs-5 mb-1" style="color: #ff6f3c;">01 // KUALITAS</div>
+                <h6 class="fw-bold">Standar Mutu OEE</h6>
+                <p class="small text-muted mb-0">Setiap batch produksi dihitung tingkat kualitas dan efisiensi mesinnya oleh teknisi.</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 h-100">
+                <div class="fw-extrabold fs-5 mb-1" style="color: #ff6f3c;">02 // TRANSPARAN</div>
+                <h6 class="fw-bold">Pantau Status Order</h6>
+                <p class="small text-muted mb-0">Lacak apakah pesanan sedang diverifikasi, diproduksi, atau sudah dikirim.</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 h-100">
+                <div class="fw-extrabold fs-5 mb-1" style="color: #ff6f3c;">03 // CERDAS</div>
+                <h6 class="fw-bold">Rekomendasi AI</h6>
+                <p class="small text-muted mb-0">Penentuan target tanggal selesai dihitung secara realistis menggunakan Machine Learning.</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-3 h-100">
+                <div class="fw-extrabold fs-5 mb-1" style="color: #ff6f3c;">04 // RESPONSIF</div>
+                <h6 class="fw-bold">Komunikasi Dua Arah</h6>
+                <p class="small text-muted mb-0">Tersedia fitur live chat langsung ke supervisi produksi disertai asisten bot.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Toast Notifikasi Real-time Keranjang -->
+<div id="cartToastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1090;"></div>
+
+<!-- ================= MODAL 1: KERANJANG BELANJA & FORM CHECKOUT ORDER ================= -->
+<div class="modal fade" id="cartModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 10px;">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold">KERANJANG BELANJA & CHECKOUT WORK ORDER</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <div class="row g-4">
+                    <!-- Daftar Item Keranjang -->
+                    <div class="col-lg-7">
+                        <div class="card p-3">
+                            <h6 class="fw-extrabold mb-3 border-bottom pb-2">Daftar Produk di Keranjang (<span id="cartModalHeaderCount">{{ cart|length }}</span> Item)</h6>
+                            <div class="table-responsive">
+                                <table class="table table-bordered align-middle small mb-0">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Produk</th>
+                                            <th>Harga/Pcs</th>
+                                            <th>Jumlah</th>
+                                            <th>Subtotal</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cartTableBody">
+                                        {% for item in cart %}
+                                        <tr>
+                                            <td class="fw-bold">{{ item.name }}</td>
+                                            <td>Rp {{ "{:,.0f}".format(item.price) }}</td>
+                                            <td class="fw-bold">{{ "{:,.0f}".format(item.quantity) }} pcs</td>
+                                            <td class="fw-bold text-success">Rp {{ "{:,.0f}".format(item.subtotal) }}</td>
+                                            <td>
+                                                <button type="button" class="btn btn-danger btn-sm py-0 px-2" onclick="handleRemoveFromCart('{{ item.product_id }}');">Hapus</button>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted py-4">Keranjang belanja Anda masih kosong. Silakan pilih produk di katalog.</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="cartTotalContainer" class="mt-3 p-3 bg-warning-subtle border border-dark d-flex justify-content-between align-items-center rounded {% if not cart %}d-none{% endif %}">
+                                <span class="fw-bold">Total Biaya Produksi Order:</span>
+                                <span id="cartGrandTotalText" class="fs-5 fw-extrabold text-dark">Rp {{ "{:,.0f}".format(cart_summary.grand_total if cart else 0) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Data Pemesan & Target Tanggal (Muncul saat mau buat order) -->
+                    <div class="col-lg-5">
+                        <div class="card p-3 border-2" style="border-color: #ff6f3c !important;">
+                            <h6 class="fw-extrabold mb-3 border-bottom pb-2">Form Pembuatan Work Order</h6>
+                            <form method="POST" action="{{ url_for('checkout_cart') }}">
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold">Nama Pemesan / Brand</label>
+                                    <input type="text" name="customer_name" class="form-control form-control-sm border-dark" value="{{ user_info.name }}" required>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold">Email / No. Telepon</label>
+                                    <input type="text" name="contact" class="form-control form-control-sm border-dark" value="{{ user_info.email }} / {{ user_info.phone }}" required>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-bold">Alamat Pengiriman</label>
+                                    <textarea name="address" class="form-control form-control-sm border-dark" rows="2" required>{{ user_info.address }}</textarea>
+                                </div>
+
+                                <div id="cartEtaContainer" class="alert alert-warning border border-dark py-2 px-3 small my-3 {% if not cart %}d-none{% endif %}">
+                                    <strong>[ AI ESTIMATOR KERANJANG ]</strong><br>
+                                    Estimasi durasi produksi: <strong id="cartEtaDaysText">{{ cart_summary.max_eta_days if cart else 1 }} hari kerja</strong><br>
+                                    Rekomendasi target paling cepat: <strong id="cartEtaDateText">{{ cart_summary.recommended_min_date if cart else '' }}</strong>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold">Target Tanggal Selesai Order</label>
+                                    <input type="date" id="cartTargetDateInput" name="target_date" class="form-control form-control-sm border-dark" 
+                                           {% if cart %}min="{{ cart_summary.recommended_min_date }}" value="{{ cart_summary.recommended_min_date }}"{% endif %} required>
+                                    <small class="text-muted" style="font-size: 11px;">Tanggal dikunci minimal sesuai perhitungan AI tercepat.</small>
+                                </div>
+
+                                <button type="submit" id="btnCheckoutSubmit" class="btn btn-industrial w-100 py-2 {% if not cart %}disabled{% endif %}">
+                                    KIRIM WORK ORDER KE SUPERVISI
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ================= MODAL 2: RIWAYAT & STATUS PESANAN ================= -->
+<div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 10px;">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold">RIWAYAT & STATUS PESANAN ANDA</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <!-- SEARCH, FILTER & SORT TOOLBAR (HISTORY ORDERS) -->
+                <div class="p-3 mb-3 bg-white border border-dark rounded" style="box-shadow: 3px 3px 0px #0f172a;">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold text-dark mb-1">
+                                <i class="bi bi-search me-1"></i>Pencarian Riwayat:
+                            </label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" id="historyOrderSearchInput" class="form-control border-dark font-monospace" placeholder="Cari ID order, nama produk, tanggal, status..." oninput="filterAndSortHistoryOrders()">
+                                <button class="btn btn-outline-dark fw-bold" type="button" onclick="clearHistoryOrdersSearch()">
+                                    <i class="bi bi-x-circle me-1"></i>Reset
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-dark mb-1">
+                                <i class="bi bi-funnel me-1"></i>Filter Status:
+                            </label>
+                            <select id="historyOrderStatusFilter" class="form-select form-select-sm border-dark fw-bold" onchange="filterAndSortHistoryOrders()">
+                                <option value="all">Semua Status</option>
+                                <option value="pending">Menunggu ACC</option>
+                                <option value="approved">Di-ACC / Siap Jadwal</option>
+                                <option value="production">Dalam Produksi / Terjadwal</option>
+                                <option value="completed">Produksi Selesai</option>
+                                <option value="shipped">Dalam Pengiriman (Shipped)</option>
+                                <option value="rejected">Ditolak</option>
+                                <option value="cancelled">Dibatalkan</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-dark mb-1">
+                                <i class="bi bi-arrow-down-up me-1"></i>Urutkan:
+                            </label>
+                            <select id="historyOrderSortSelect" class="form-select form-select-sm border-dark fw-bold" onchange="filterAndSortHistoryOrders()">
+                                <option value="id_desc">ID Order (Terbaru / Z-A)</option>
+                                <option value="id_asc">ID Order (Terlama / A-Z)</option>
+                                <option value="total_desc">Total Biaya (Tertinggi)</option>
+                                <option value="total_asc">Total Biaya (Terendah)</option>
+                                <option value="qty_desc">Jumlah Qty (Terbanyak)</option>
+                                <option value="qty_asc">Jumlah Qty (Tersedikit)</option>
+                                <option value="date_desc">Target Selesai (Terjauh)</option>
+                                <option value="date_asc">Target Selesai (Terdekat)</option>
+                                <option value="product_asc">Nama Produk (A-Z)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Quick Filter Pills -->
+                    <div class="d-flex flex-wrap gap-1 mt-2 pt-2 border-top border-light align-items-center">
+                        <span class="small fw-bold text-muted me-1">Filter Cepat:</span>
+                        <button type="button" class="btn btn-xs btn-dark fw-bold py-1 px-2 filter-pill-history active" data-filter="all" onclick="setHistoryOrderFilter('all', this)">
+                            Semua
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-warning text-dark fw-bold py-1 px-2 filter-pill-history" data-filter="pending" onclick="setHistoryOrderFilter('pending', this)">
+                            Menunggu ACC
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-primary fw-bold py-1 px-2 filter-pill-history" data-filter="approved" onclick="setHistoryOrderFilter('approved', this)">
+                            Di-ACC
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-info text-dark fw-bold py-1 px-2 filter-pill-history" data-filter="production" onclick="setHistoryOrderFilter('production', this)">
+                            Produksi
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-success fw-bold py-1 px-2 filter-pill-history" data-filter="completed" onclick="setHistoryOrderFilter('completed', this)">
+                            Selesai
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-dark fw-bold py-1 px-2 filter-pill-history" data-filter="shipped" onclick="setHistoryOrderFilter('shipped', this)">
+                            Shipped
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-danger fw-bold py-1 px-2 filter-pill-history" data-filter="rejected" onclick="setHistoryOrderFilter('rejected', this)">
+                            Ditolak
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-secondary fw-bold py-1 px-2 filter-pill-history" data-filter="cancelled" onclick="setHistoryOrderFilter('cancelled', this)">
+                            Dibatalkan
+                        </button>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-light small">
+                        <span id="historyOrderCountBadge" class="badge bg-dark text-white font-monospace">
+                            Menampilkan {{ my_orders|length }} riwayat pesanan
+                        </span>
+                        <span class="text-muted" style="font-size: 11px;">Filter & pengurutan real-time</span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle mb-0 small bg-white">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID ORDER</th>
+                                <th>PRODUK</th>
+                                <th>JUMLAH</th>
+                                <th>TOTAL BIAYA</th>
+                                <th>TARGET SELESAI</th>
+                                <th>STATUS</th>
+                                <th>CATATAN REKOMENDASI</th>
+                                <th class="text-center">AKSI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyOrdersTbody">
+                            {% for o in my_orders %}
+                            {% set status_cat = 'other' %}
+                            {% if 'cancelled' in (o.status | lower) or 'batal' in (o.status | lower) %}
+                                {% set status_cat = 'cancelled' %}
+                            {% elif 'rejected' in (o.status | lower) or 'tolak' in (o.status | lower) %}
+                                {% set status_cat = 'rejected' %}
+                            {% elif o.status == 'Shipped' %}
+                                {% set status_cat = 'shipped' %}
+                            {% elif o.status == 'Completed' %}
+                                {% set status_cat = 'completed' %}
+                            {% elif o.status in ['In Production', 'Approved', 'Pending Production Scheduling'] %}
+                                {% set status_cat = 'production' %}
+                            {% elif o.status == 'Approved by Manager' %}
+                                {% set status_cat = 'approved' %}
+                            {% elif o.status in ['Pending Manager Approval', 'Pending'] %}
+                                {% set status_cat = 'pending' %}
+                            {% endif %}
+                            <tr class="history-order-row"
+                                data-order-id="{{ o.order_id }}"
+                                data-product="{{ (o.product_name or '') | lower }}"
+                                data-qty="{{ o.quantity or 0 }}"
+                                data-total="{{ o.total_price or 0 }}"
+                                data-date="{{ o.target_date or '' }}"
+                                data-status="{{ (o.status or '') | lower }}"
+                                data-status-category="{{ status_cat }}">
+                                <td class="fw-bold font-monospace">{{ o.order_id }}</td>
+                                <td class="fw-semibold">{{ o.product_name }}</td>
+                                <td>{{ "{:,.0f}".format(o.quantity) }} pcs</td>
+                                <td class="fw-bold">Rp {{ "{:,.0f}".format(o.total_price) }}</td>
+                                <td>{{ o.target_date }}</td>
+                                <td>
+                                    {% if o.status == 'Pending Manager Approval' or o.status == 'Pending' %}
+                                        <span class="badge bg-warning text-dark border border-dark">MENUNGGU ACC</span>
+                                    {% elif o.status == 'Approved by Manager' %}
+                                        <span class="badge bg-primary text-white border border-dark">DI-ACC</span>
+                                    {% elif o.status == 'Approved' %}
+                                        <span class="badge bg-info text-dark border border-dark">TERJADWAL</span>
+                                    {% elif o.status == 'In Production' %}
+                                        <span class="badge bg-primary text-white border border-dark">IN PRODUCTION</span>
+                                    {% elif o.status == 'Completed' %}
+                                        <span class="badge bg-success border border-dark">PRODUKSI SELESAI</span>
+                                    {% elif o.status == 'Shipped' %}
+                                        <span class="badge bg-dark border border-dark">SHIPPED</span>
+                                    {% elif 'cancelled' in (o.status | lower) or 'batal' in (o.status | lower) %}
+                                        <span class="badge bg-secondary border border-dark">DIBATALKAN</span>
+                                    {% elif 'rejected' in (o.status | lower) or 'tolak' in (o.status | lower) %}
+                                        <span class="badge bg-danger border border-dark">DITOLAK</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary border border-dark">{{ o.status | upper }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if o.rejection_reason or o.supervisor_note or o.technician_note %}
+                                        <span class="text-danger fw-bold small">[{{ o.rejected_by or 'Alasan' }}]: {{ o.rejection_reason or o.supervisor_note or o.technician_note }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center text-nowrap">
+                                    {% if 'cancelled' in (o.status | lower) or 'batal' in (o.status | lower) %}
+                                        <span class="badge bg-secondary border border-dark py-1 px-2">Dibatalkan</span>
+                                    {% elif 'rejected' in (o.status | lower) or 'tolak' in (o.status | lower) %}
+                                        <button type="button" class="btn btn-warning btn-sm py-0 px-2 fw-bold me-1" data-bs-toggle="modal" data-bs-target="#editOrderModal_{{ o.order_id }}">Edit</button>
+                                        <form method="POST" action="{{ url_for('user_cancel_order', order_id=o.order_id) }}" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan orderan {{ o.order_id }}?');">
+                                            <button type="submit" class="btn btn-danger btn-sm py-0 px-2 fw-bold">Batal</button>
+                                        </form>
+                                    {% else %}
+                                        <button type="button" class="btn btn-outline-dark btn-sm py-0 px-2" data-bs-toggle="modal" data-bs-target="#orderProgressModal">Progres</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            <tr id="historyOrderEmptySearchRow" class="d-none">
+                                <td colspan="8" class="text-center py-4 bg-white text-muted">
+                                    <div class="fw-bold text-dark mb-1">Tidak ada riwayat yang sesuai</div>
+                                    <small>Tidak ada data yang cocok dengan kriteria filter atau pencarian Anda. Silakan klik <strong>Reset</strong>.</small>
+                                </td>
+                            </tr>
+                            {% if not my_orders %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">Belum ada riwayat pesanan.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL 4: TRACKING PROGRES ORDER ANDA ================= -->
+<div class="modal fade" id="orderProgressModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 12px; box-shadow: 6px 6px 0px #0f172a;">
+            <div class="modal-header bg-dark text-white py-3">
+                <div>
+                    <span class="badge bg-warning text-dark border border-dark fw-bold mb-1">// LIVE ORDER TRACKER</span>
+                    <h5 class="modal-title fw-extrabold mb-0">TRACKING PROGRES PESANAN ANDA</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <p class="text-muted small mb-3">Pantau tahapan proses pesanan Anda dari persetujuan (ACC), penjadwalan lini mesin, proses produksi, hingga pengiriman.</p>
+
+                <!-- SEARCH, FILTER & SORT TOOLBAR (ORDER PROGRESS) -->
+                <div class="p-3 mb-3 bg-white border border-dark rounded" style="box-shadow: 3px 3px 0px #0f172a;">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold text-dark mb-1">
+                                <i class="bi bi-search me-1"></i>Pencarian Tracking:
+                            </label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" id="orderProgressSearchInput" class="form-control border-dark font-monospace" placeholder="Cari ID order, nama produk, status..." oninput="filterAndSortOrderProgress()">
+                                <button class="btn btn-outline-dark fw-bold" type="button" onclick="clearOrderProgressSearch()">
+                                    <i class="bi bi-x-circle me-1"></i>Reset
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-dark mb-1">
+                                <i class="bi bi-funnel me-1"></i>Filter Status:
+                            </label>
+                            <select id="orderProgressStatusFilter" class="form-select form-select-sm border-dark fw-bold" onchange="filterAndSortOrderProgress()">
+                                <option value="all">Semua Status</option>
+                                <option value="pending">Menunggu ACC</option>
+                                <option value="approved">Di-ACC / Siap Jadwal</option>
+                                <option value="production">Dalam Produksi / Terjadwal</option>
+                                <option value="completed">Produksi Selesai</option>
+                                <option value="shipped">Dalam Pengiriman (Shipped)</option>
+                                <option value="rejected">Pesanan Ditolak</option>
+                                <option value="cancelled">Pesanan Dibatalkan</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-dark mb-1">
+                                <i class="bi bi-arrow-down-up me-1"></i>Urutkan Tracking:
+                            </label>
+                            <select id="orderProgressSortSelect" class="form-select form-select-sm border-dark fw-bold" onchange="filterAndSortOrderProgress()">
+                                <option value="id_desc">ID Order (Terbaru / Z-A)</option>
+                                <option value="id_asc">ID Order (Terlama / A-Z)</option>
+                                <option value="total_desc">Total Biaya (Tertinggi)</option>
+                                <option value="total_asc">Total Biaya (Terendah)</option>
+                                <option value="qty_desc">Jumlah Qty (Terbanyak)</option>
+                                <option value="qty_asc">Jumlah Qty (Tersedikit)</option>
+                                <option value="date_asc">Target Tanggal (Paling Dekat)</option>
+                                <option value="date_desc">Target Tanggal (Paling Jauh)</option>
+                                <option value="product_asc">Nama Produk (A-Z)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Quick Filter Pills -->
+                    <div class="d-flex flex-wrap gap-1 mt-2 pt-2 border-top border-light align-items-center">
+                        <span class="small fw-bold text-muted me-1">Filter Cepat:</span>
+                        <button type="button" class="btn btn-xs btn-dark fw-bold py-1 px-2 filter-pill-progress active" data-filter="all" onclick="setOrderProgressFilter('all', this)">
+                            Semua
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-warning text-dark fw-bold py-1 px-2 filter-pill-progress" data-filter="pending" onclick="setOrderProgressFilter('pending', this)">
+                            Menunggu ACC
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-primary fw-bold py-1 px-2 filter-pill-progress" data-filter="approved" onclick="setOrderProgressFilter('approved', this)">
+                            Di-ACC
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-info text-dark fw-bold py-1 px-2 filter-pill-progress" data-filter="production" onclick="setOrderProgressFilter('production', this)">
+                            Produksi
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-success fw-bold py-1 px-2 filter-pill-progress" data-filter="completed" onclick="setOrderProgressFilter('completed', this)">
+                            Selesai
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-dark fw-bold py-1 px-2 filter-pill-progress" data-filter="shipped" onclick="setOrderProgressFilter('shipped', this)">
+                            Shipped
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-danger fw-bold py-1 px-2 filter-pill-progress" data-filter="rejected" onclick="setOrderProgressFilter('rejected', this)">
+                            Ditolak
+                        </button>
+                        <button type="button" class="btn btn-xs btn-outline-secondary fw-bold py-1 px-2 filter-pill-progress" data-filter="cancelled" onclick="setOrderProgressFilter('cancelled', this)">
+                            Dibatalkan
+                        </button>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-light small">
+                        <span id="orderProgressCountBadge" class="badge bg-warning text-dark border border-dark font-monospace">
+                            Menampilkan {{ my_orders|length }} pesanan dipantau
+                        </span>
+                        <span class="text-muted" style="font-size: 11px;">Filter & pengurutan real-time</span>
+                    </div>
+                </div>
+
+                <div id="orderProgressCardsContainer">
+                {% for o in my_orders %}
+                {% set status_cat = 'other' %}
+                {% if 'cancelled' in (o.status | lower) or 'batal' in (o.status | lower) %}
+                    {% set status_cat = 'cancelled' %}
+                {% elif 'rejected' in (o.status | lower) or 'tolak' in (o.status | lower) %}
+                    {% set status_cat = 'rejected' %}
+                {% elif o.status == 'Shipped' %}
+                    {% set status_cat = 'shipped' %}
+                {% elif o.status == 'Completed' %}
+                    {% set status_cat = 'completed' %}
+                {% elif o.status in ['In Production', 'Approved', 'Pending Production Scheduling'] %}
+                    {% set status_cat = 'production' %}
+                {% elif o.status == 'Approved by Manager' %}
+                    {% set status_cat = 'approved' %}
+                {% elif o.status in ['Pending Manager Approval', 'Pending'] %}
+                    {% set status_cat = 'pending' %}
+                {% endif %}
+                <div class="card p-3 mb-4 border-2 order-progress-card {% if status_cat == 'cancelled' %}border-secondary{% elif status_cat == 'rejected' %}border-danger{% else %}border-dark{% endif %}"
+                     style="box-shadow: 4px 4px 0px #0f172a;"
+                     data-order-id="{{ o.order_id }}"
+                     data-product="{{ (o.product_name or '') | lower }}"
+                     data-qty="{{ o.quantity or 0 }}"
+                     data-total="{{ o.total_price or 0 }}"
+                     data-date="{{ o.target_date or o.date or '' }}"
+                     data-status="{{ (o.status or '') | lower }}"
+                     data-status-category="{{ status_cat }}">
+                    <!-- Order Header -->
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom pb-2 mb-3">
+                        <div>
+                            <span class="badge bg-dark fs-6 font-monospace me-2">{{ o.order_id }}</span>
+                            <span class="fw-extrabold fs-6 text-dark">{{ o.product_name }}</span>
+                            <span class="text-muted small ms-2">({{ "{:,.0f}".format(o.quantity) }} pcs)</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="small text-muted">Total: <strong class="text-dark">Rp {{ "{:,.0f}".format(o.total_price) }}</strong></span>
+                            <span class="small text-muted">| Target Selesai: <strong class="text-primary font-monospace">{{ o.target_date }}</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Visual Stepper Progress Bar -->
+                    <div class="row text-center position-relative my-2 g-2">
+                        <!-- Step 1: Diajukan -->
+                        <div class="col-3">
+                            <div class="p-2 rounded border border-dark bg-success text-white fw-bold small">
+                                <div>1. Diajukan</div>
+                                <div style="font-size: 10px; font-weight: normal;">{{ o.date or 'Terkirim' }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Persetujuan (ACC) -->
+                        <div class="col-3">
+                            {% if status_cat == 'cancelled' %}
+                                <div class="p-2 rounded border border-secondary bg-secondary text-white fw-bold small">
+                                    <div>2. Dibatalkan</div>
+                                    <div style="font-size: 10px;">Pesanan Dibatalkan</div>
+                                </div>
+                            {% elif o.status == 'Pending Manager Approval' or o.status == 'Pending' %}
+                                <div class="p-2 rounded border border-dark bg-warning text-dark fw-bold small">
+                                    <div>2. Menunggu ACC</div>
+                                    <div style="font-size: 10px;">Verifikasi Pesanan</div>
+                                </div>
+                            {% elif o.status == 'Rejected by Manager' %}
+                                <div class="p-2 rounded border border-dark bg-danger text-white fw-bold small">
+                                    <div>2. Ditolak</div>
+                                    <div style="font-size: 10px;">Pesanan Ditolak</div>
+                                </div>
+                            {% elif o.status == 'Approved by Manager' %}
+                                <div class="p-2 rounded border border-dark bg-success text-white fw-bold small">
+                                    <div>2. Di-ACC</div>
+                                    <div style="font-size: 10px;">Pesanan Disetujui</div>
+                                </div>
+                            {% elif o.status in ['Approved', 'In Production', 'Completed', 'Shipped', 'Rejected by Supervisor', 'Rejected by Technician'] %}
+                                <div class="p-2 rounded border border-dark bg-success text-white fw-bold small">
+                                    <div>2. Di-ACC</div>
+                                    <div style="font-size: 10px;">Pesanan Disetujui</div>
+                                </div>
+                            {% else %}
+                                <div class="p-2 rounded border border-secondary bg-white text-muted small">
+                                    <div>2. Menunggu ACC</div>
+                                    <div style="font-size: 10px;">-</div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Step 3: Penjadwalan & Produksi -->
+                        <div class="col-3">
+                            {% if status_cat == 'cancelled' %}
+                                <div class="p-2 rounded border border-secondary bg-white text-muted small">
+                                    <div>3. Produksi</div>
+                                    <div style="font-size: 10px;">Dibatalkan</div>
+                                </div>
+                            {% elif o.status in ['Pending Manager Approval', 'Pending', 'Rejected by Manager'] %}
+                                <div class="p-2 rounded border border-secondary bg-white text-muted small">
+                                    <div>3. Produksi</div>
+                                    <div style="font-size: 10px;">Menunggu ACC</div>
+                                </div>
+                            {% elif o.status == 'Approved by Manager' %}
+                                <div class="p-2 rounded border border-dark bg-warning text-dark fw-bold small">
+                                    <div>3. Penjadwalan</div>
+                                    <div style="font-size: 10px;">Persiapan Lini Mesin</div>
+                                </div>
+                            {% elif o.status in ['Rejected by Supervisor', 'Rejected'] %}
+                                <div class="p-2 rounded border border-dark bg-danger text-white fw-bold small">
+                                    <div>3. Ditolak</div>
+                                    <div style="font-size: 10px;">Oleh Supervisi</div>
+                                </div>
+                            {% elif o.status == 'Rejected by Technician' %}
+                                <div class="p-2 rounded border border-dark bg-danger text-white fw-bold small">
+                                    <div>3. Ditolak</div>
+                                    <div style="font-size: 10px;">Oleh Teknisi Mesin</div>
+                                </div>
+                            {% elif o.status == 'Approved' %}
+                                <div class="p-2 rounded border border-dark bg-info text-dark fw-bold small">
+                                    <div>3. Terjadwal</div>
+                                    <div style="font-size: 10px;">Siap di Mesin</div>
+                                </div>
+                            {% elif o.status == 'In Production' %}
+                                <div class="p-2 rounded border border-dark bg-primary text-white fw-bold small">
+                                    <div>3. In Production</div>
+                                    <div style="font-size: 10px;">Sedang Diproses</div>
+                                </div>
+                            {% elif o.status in ['Completed', 'Shipped'] %}
+                                <div class="p-2 rounded border border-dark bg-success text-white fw-bold small">
+                                    <div>3. Selesai</div>
+                                    <div style="font-size: 10px;">Produksi Sukses</div>
+                                </div>
+                            {% else %}
+                                <div class="p-2 rounded border border-secondary bg-white text-muted small">
+                                    <div>3. Produksi</div>
+                                    <div style="font-size: 10px;">-</div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Step 4: Selesai & Kirim -->
+                        <div class="col-3">
+                            {% if status_cat == 'cancelled' %}
+                                <div class="p-2 rounded border border-secondary bg-white text-muted small">
+                                    <div>4. Selesai</div>
+                                    <div style="font-size: 10px;">Dibatalkan</div>
+                                </div>
+                            {% elif o.status == 'Shipped' %}
+                                <div class="p-2 rounded border border-dark bg-dark text-white fw-bold small">
+                                    <div>4. Shipped</div>
+                                    <div style="font-size: 10px;">Dalam Pengiriman</div>
+                                </div>
+                            {% elif o.status == 'Completed' %}
+                                <div class="p-2 rounded border border-dark bg-success text-white fw-bold small">
+                                    <div>4. Selesai</div>
+                                    <div style="font-size: 10px;">Siap Dikirim</div>
+                                </div>
+                            {% else %}
+                                <div class="p-2 rounded border border-secondary bg-white text-muted small">
+                                    <div>4. Selesai</div>
+                                    <div style="font-size: 10px;">Belum Selesai</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Kotak Notifikasi Khusus: Dibatalkan ATAU Ditolak -->
+                    {% if status_cat == 'cancelled' %}
+                    <div class="alert alert-secondary border border-dark p-3 mt-3 mb-1 rounded" style="background-color: #f8fafc;">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-secondary border border-dark text-white fw-bold">DIBATALKAN</span>
+                                    <strong class="text-dark fs-6">Pesanan Dibatalkan</strong>
+                                </div>
+                                <p class="mb-0 text-muted small mt-1">
+                                    Pesanan ini telah dibatalkan{% if o.cancelled_by %} oleh <strong>{{ o.cancelled_by }}</strong>{% endif %}{% if o.cancelled_at %} pada <span class="font-monospace">{{ o.cancelled_at }}</span>{% endif %}.
+                                    {% if o.cancel_reason %}<br><strong>Keterangan:</strong> "{{ o.cancel_reason }}"{% endif %}
+                                </p>
+                            </div>
+                            <div>
+                                <span class="badge bg-light text-dark border border-dark px-3 py-2 font-monospace">Status: Dibatalkan</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% elif status_cat == 'rejected' %}
+                    <div class="alert alert-danger border border-dark p-3 mt-3 mb-1 rounded">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div>
+                                <strong class="text-danger fs-6">Pesanan Ditolak oleh {{ o.rejected_by or 'Manajemen / Supervisi' }}</strong>
+                                <p class="mb-0 text-dark small mt-1">
+                                    <strong>Alasan Penolakan:</strong> "{{ o.rejection_reason or o.supervisor_note or o.technician_note or 'Pesanan belum dapat dipenuhi saat ini.' }}"
+                                    {% if o.rejected_at %}<br><small class="text-muted">Waktu: {{ o.rejected_at }}</small>{% endif %}
+                                </p>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-warning btn-sm fw-bold border-dark px-3" data-bs-toggle="modal" data-bs-target="#editOrderModal_{{ o.order_id }}">
+                                    Sesuaikan / Edit Orderan
+                                </button>
+                                <form method="POST" action="{{ url_for('user_cancel_order', order_id=o.order_id) }}" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan orderan {{ o.order_id }}?');">
+                                    <button type="submit" class="btn btn-danger btn-sm fw-bold border-dark px-3">
+                                        Batalkan Orderan
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <div id="orderProgressEmptySearchCard" class="p-5 text-center text-muted bg-white rounded border border-dark d-none">
+                    <div class="fw-bold text-dark mb-1">Tidak ada hasil tracking</div>
+                    <small>Tidak ada order yang cocok dengan kriteria filter atau pencarian Anda. Silakan klik <strong>Reset</strong>.</small>
+                </div>
+                {% if not my_orders %}
+                <div class="p-5 text-center text-muted bg-white rounded border border-dark">
+                    Belum ada orderan yang dibuat. Silakan belanja di katalog.
+                </div>
+                {% endif %}
+                </div>
+            </div>
+            <div class="modal-footer bg-white border-top border-dark py-2">
+                <button type="button" class="btn btn-outline-dark fw-bold btn-sm" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODALS: EDIT & PENYESUAIAN ORDERAN DITOLAK ================= -->
+{% for o in my_orders %}
+{% if 'Rejected' in o.status or 'Cancelled' in o.status %}
+<div class="modal fade" id="editOrderModal_{{ o.order_id }}" tabindex="-1" style="z-index: 1095;">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 12px; box-shadow: 6px 6px 0px #0f172a;">
+            <form method="POST" action="{{ url_for('user_edit_order', order_id=o.order_id) }}">
+                <div class="modal-header bg-warning text-dark border-bottom border-dark py-3">
+                    <h5 class="modal-title fw-extrabold mb-0">SESUAIKAN ORDERAN ({{ o.order_id }})</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-light small">
+                    <div class="p-3 bg-white rounded border border-dark mb-3">
+                        <div>Produk: <strong class="text-dark">{{ o.product_name }}</strong></div>
+                        <div>Catatan Penolakan Sebelumnya: <span class="text-danger fw-bold">"{{ o.rejection_reason or o.supervisor_note or o.technician_note or '-' }}"</span></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">Jumlah Pesanan Baru (Pcs):</label>
+                        <input type="number" name="quantity" class="form-control border-dark fw-bold" value="{{ o.quantity }}" min="100" step="50" required>
+                        <small class="text-muted">Sesuaikan jumlah pesanan jika penolakan disebabkan kapasitas mesin atau stok bahan.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">Target Tanggal Selesai Baru:</label>
+                        <input type="date" name="target_date" class="form-control border-dark font-monospace" value="{{ o.target_date }}" required>
+                        <small class="text-muted">Pilih tanggal target yang lebih fleksibel jika jadwal produksi sedang padat.</small>
+                    </div>
+
+                    <div class="alert alert-info border border-dark py-2 px-3 mb-0 small">
+                        <em>Setelah disimpan, orderan ini akan otomatis diajukan ulang ke Supervisi Produksi untuk diverifikasi kembali.</em>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top border-dark py-2">
+                    <button type="button" class="btn btn-outline-dark fw-bold btn-sm" data-bs-dismiss="modal">Kembali</button>
+                    <button type="submit" class="btn btn-industrial btn-sm px-3">Simpan & Ajukan Ulang ke Supervisi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<!-- ================= MODAL 3: LIVE CHAT SUPERVISI & BOT (AJAX ANTI-KELUAR POPUP) ================= -->
+<div class="modal fade" id="chatModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 10px;">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold">CHAT SUPERVISI & ASISTEN BOT</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <p class="text-muted small mb-2">Tanyakan MOQ, harga, atau status pesanan. Pesan terkirim langsung tanpa menutup jendela ini.</p>
+
+                <div class="chat-box mb-3" id="chatBoxModal">
+                    {% for c in chats %}
+                        <div class="mb-2">
+                            {% if c.sender_role == 'user' %}
+                                <div class="msg-user">
+                                    <div class="fw-bold small">Anda</div>
+                                    <div>{{ c.message }}</div>
+                                    <div class="text-end" style="font-size: 9px;">{{ c.timestamp }}</div>
+                                </div>
+                            {% elif c.sender_role == 'bot' %}
+                                <div class="msg-bot">
+                                    <div class="fw-bold small">Chatbot DMP</div>
+                                    <div>{{ c.message }}</div>
+                                    <div class="text-end" style="font-size: 9px;">{{ c.timestamp }}</div>
+                                </div>
+                            {% else %}
+                                <div class="msg-supervisi">
+                                    <div class="fw-bold small">Supervisi</div>
+                                    <div>{{ c.message }}</div>
+                                    <div class="text-end" style="font-size: 9px;">{{ c.timestamp }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div id="emptyChatNotice" class="text-center text-muted small mt-5">Belum ada percakapan. Silakan kirim pesan!</div>
+                    {% endfor %}
+                </div>
+
+                <!-- Form Chat menggunakan AJAX agar tidak keluar dari pop-up -->
+                <form id="ajaxChatForm" onsubmit="return sendChatAjax(event);">
+                    <div class="input-group">
+                        <input type="text" id="chatMessageInput" name="message" class="form-control border-dark" placeholder="Ketik pesan untuk supervisi..." required autocomplete="off">
+                        <button class="btn btn-industrial px-4" type="submit">KIRIM</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function escapeHtml(text) {
+    if (!text) return "";
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+let userChatCount = {{ chats|length }};
+let userChatPollInterval = null;
+
+function appendChatMessage(role, name, message, timestamp) {
+    const box = document.getElementById("chatBoxModal");
+    if (!box) return;
+
+    const emptyNotice = document.getElementById("emptyChatNotice");
+    if (emptyNotice) {
+        emptyNotice.remove();
+    }
+
+    let bubbleClass = "msg-user";
+    if (role === "bot") bubbleClass = "msg-bot";
+    else if (role === "supervisi") bubbleClass = "msg-supervisi";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "mb-2";
+    wrapper.innerHTML = `
+        <div class="${bubbleClass}">
+            <div class="fw-bold small">${escapeHtml(name)}</div>
+            <div>${escapeHtml(message)}</div>
+            <div class="text-end" style="font-size: 9px;">${escapeHtml(timestamp)}</div>
+        </div>
+    `;
+    box.appendChild(wrapper);
+    box.scrollTop = box.scrollHeight;
+    userChatCount++;
+}
+
+function renderUserChats(chats) {
+    const box = document.getElementById("chatBoxModal");
+    if (!box) return;
+    if (!chats || chats.length === 0) {
+        box.innerHTML = `<div id="emptyChatNotice" class="text-center text-muted small mt-5">Belum ada percakapan. Silakan kirim pesan!</div>`;
+        return;
+    }
+    let html = "";
+    chats.forEach(c => {
+        const role = c.sender_role || "user";
+        let bubbleClass = "msg-user";
+        let defaultName = "Anda";
+        if (role === "bot") {
+            bubbleClass = "msg-bot";
+            defaultName = "Chatbot DMP";
+        } else if (role === "supervisi") {
+            bubbleClass = "msg-supervisi";
+            defaultName = "Supervisi";
+        }
+        const name = c.sender_name || defaultName;
+        html += `
+            <div class="mb-2">
+                <div class="${bubbleClass}">
+                    <div class="fw-bold small">${escapeHtml(name)}</div>
+                    <div>${escapeHtml(c.message)}</div>
+                    <div class="text-end" style="font-size: 9px;">${escapeHtml(c.timestamp || "")}</div>
+                </div>
+            </div>
+        `;
+    });
+    box.innerHTML = html;
+    box.scrollTop = box.scrollHeight;
+    userChatCount = chats.length;
+}
+
+function fetchUserChats() {
+    fetch("{{ url_for('user_get_chats') }}")
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.chats && data.chats.length !== userChatCount) {
+                renderUserChats(data.chats);
+            }
+        })
+        .catch(err => console.error("Error fetching chats:", err));
+}
+
+function sendChatAjax(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    const input = document.getElementById("chatMessageInput");
+    if (!input) return false;
+    const message = input.value.trim();
+    if (!message) return false;
+
+    input.value = "";
+    input.focus();
+
+    const now = new Date();
+    const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+    // Tampilkan pesan user langsung di dalam modal (anti close)
+    appendChatMessage("user", "Anda", message, timeStr);
+
+    fetch("{{ url_for('user_chat_ajax') }}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: "message=" + encodeURIComponent(message)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data && data.reply) {
+            appendChatMessage("bot", "Chatbot DMP", data.reply, data.time || timeStr);
+        }
+    })
+    .catch(err => {
+        console.error("Gagal mengirim pesan chat:", err);
+    });
+
+    return false;
+}
+
+// Cart Helpers & AJAX
+function formatRupiah(number) {
+    return 'Rp ' + Number(number).toLocaleString('id-ID');
+}
+
+function showCartToast(message, isSuccess = true) {
+    const container = document.getElementById("cartToastContainer");
+    if (!container) return;
+    const toastEl = document.createElement("div");
+    toastEl.className = `toast align-items-center text-white border-2 border-dark show mb-2 ${isSuccess ? 'bg-dark' : 'bg-danger'}`;
+    toastEl.style.boxShadow = "4px 4px 0px rgba(0,0,0,0.3)";
+    toastEl.setAttribute("role", "alert");
+    toastEl.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body fw-bold" style="font-size: 13px;">
+                ${escapeHtml(message)}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.toast').remove();"></button>
+        </div>
+    `;
+    container.appendChild(toastEl);
+    setTimeout(() => {
+        toastEl.classList.remove("show");
+        setTimeout(() => toastEl.remove(), 400);
+    }, 3000);
+}
+
+function updateCartUI(cart, cartSummary) {
+    const count = cart ? cart.length : 0;
+    
+    // Update navbar badge
+    const navBadge = document.getElementById("navCartBadge");
+    if (navBadge) {
+        navBadge.textContent = count;
+        if (count > 0) {
+            navBadge.classList.remove("d-none");
+        } else {
+            navBadge.classList.add("d-none");
+        }
+    }
+
+    // Update all .cart-count-text
+    document.querySelectorAll(".cart-count-text").forEach(el => {
+        el.textContent = count;
+    });
+
+    // Update modal header count
+    const modalHeaderCount = document.getElementById("cartModalHeaderCount");
+    if (modalHeaderCount) {
+        modalHeaderCount.textContent = count;
+    }
+
+    // Update modal table body
+    const tbody = document.getElementById("cartTableBody");
+    if (tbody) {
+        if (!cart || cart.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Keranjang belanja Anda masih kosong. Silakan pilih produk di katalog.</td></tr>';
+        } else {
+            let html = "";
+            cart.forEach(item => {
+                html += `
+                    <tr>
+                        <td class="fw-bold">${escapeHtml(item.name || item.product_name)}</td>
+                        <td>${formatRupiah(item.price || item.price_per_pcs)}</td>
+                        <td class="fw-bold">${Number(item.quantity).toLocaleString('id-ID')} pcs</td>
+                        <td class="fw-bold text-success">${formatRupiah(item.subtotal)}</td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm py-0 px-2" onclick="handleRemoveFromCart('${item.product_id}');">Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+    }
+
+    // Update Total Container
+    const totalContainer = document.getElementById("cartTotalContainer");
+    const grandTotalText = document.getElementById("cartGrandTotalText");
+    if (totalContainer && grandTotalText) {
+        if (count > 0 && cartSummary) {
+            totalContainer.classList.remove("d-none");
+            grandTotalText.textContent = formatRupiah(cartSummary.grand_total || 0);
+        } else {
+            totalContainer.classList.add("d-none");
+        }
+    }
+
+    // Update ETA Estimator in modal
+    const etaContainer = document.getElementById("cartEtaContainer");
+    const etaDaysText = document.getElementById("cartEtaDaysText");
+    const etaDateText = document.getElementById("cartEtaDateText");
+    const targetDateInput = document.getElementById("cartTargetDateInput");
+    const checkoutBtn = document.getElementById("btnCheckoutSubmit");
+
+    if (count > 0 && cartSummary) {
+        if (etaContainer) etaContainer.classList.remove("d-none");
+        if (etaDaysText) etaDaysText.textContent = (cartSummary.max_eta_days || 1) + " hari kerja";
+        if (etaDateText) etaDateText.textContent = cartSummary.recommended_min_date || "";
+        if (targetDateInput) {
+            targetDateInput.min = cartSummary.recommended_min_date || "";
+            if (!targetDateInput.value || targetDateInput.value < cartSummary.recommended_min_date) {
+                targetDateInput.value = cartSummary.recommended_min_date || "";
+            }
+        }
+        if (checkoutBtn) checkoutBtn.classList.remove("disabled");
+    } else {
+        if (etaContainer) etaContainer.classList.add("d-none");
+        if (checkoutBtn) checkoutBtn.classList.add("disabled");
+    }
+}
+
+function fetchCartData() {
+    fetch("{{ url_for('user_get_cart_data') }}")
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.cart !== undefined) {
+                updateCartUI(data.cart, data.cart_summary);
+            }
+        })
+        .catch(err => console.error("Error fetching cart data:", err));
+}
+
+function handleAddToCart(event, form) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalBtnHtml = submitBtn ? submitBtn.innerHTML : "+ Masukkan Keranjang";
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Menambahkan...`;
+    }
+
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: "POST",
+        body: formData,
+        headers: {
+            "X-Requested-With": "XMLHttpRequest"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "success") {
+            if (submitBtn) {
+                submitBtn.innerHTML = `Berhasil Ditambahkan!`;
+                submitBtn.classList.remove("btn-industrial");
+                submitBtn.classList.add("btn-success");
+            }
+            showCartToast(data.message || "Produk berhasil ditambahkan ke keranjang!");
+            fetchCartData();
+            setTimeout(() => {
+                if (submitBtn) {
+                    submitBtn.innerHTML = originalBtnHtml;
+                    submitBtn.classList.remove("btn-success");
+                    submitBtn.classList.add("btn-industrial");
+                    submitBtn.disabled = false;
+                }
+            }, 1800);
+        } else {
+            showCartToast(data.message || "Gagal menambahkan ke keranjang.", false);
+            if (submitBtn) {
+                submitBtn.innerHTML = originalBtnHtml;
+                submitBtn.disabled = false;
+            }
+        }
+    })
+    .catch(err => {
+        console.error("Add to cart error:", err);
+        showCartToast("Terjadi kesalahan koneksi.", false);
+        if (submitBtn) {
+            submitBtn.innerHTML = originalBtnHtml;
+            submitBtn.disabled = false;
+        }
+    });
+
+    return false;
+}
+
+function handleRemoveFromCart(productId) {
+    fetch("{{ url_for('remove_from_cart', product_id='PROD_ID') }}".replace('PROD_ID', productId), {
+        method: "POST",
+        headers: {
+            "X-Requested-With": "XMLHttpRequest"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "success") {
+            showCartToast("Item berhasil dihapus dari keranjang.");
+            fetchCartData();
+        }
+    })
+    .catch(err => {
+        console.error("Remove from cart error:", err);
+    });
+}
+
+// ================= SEARCH, FILTER & SORT FOR USER HISTORY ORDERS =================
+function setHistoryOrderFilter(filterValue, btnEl) {
+    const select = document.getElementById("historyOrderStatusFilter");
+    if (select) select.value = filterValue;
+    syncHistoryOrderPill(filterValue);
+    filterAndSortHistoryOrders();
+}
+
+function syncHistoryOrderPill(filterValue) {
+    document.querySelectorAll(".filter-pill-history").forEach(btn => {
+        const f = btn.dataset.filter;
+        if (f === filterValue) {
+            btn.classList.add("active");
+            if (f === "all") btn.className = "btn btn-xs btn-dark text-white fw-bold py-1 px-2 filter-pill-history active";
+            else if (f === "cancelled") btn.className = "btn btn-xs btn-secondary text-white fw-bold py-1 px-2 filter-pill-history active";
+            else if (f === "rejected") btn.className = "btn btn-xs btn-danger text-white fw-bold py-1 px-2 filter-pill-history active";
+            else if (f === "pending") btn.className = "btn btn-xs btn-warning text-dark fw-bold py-1 px-2 filter-pill-history active";
+            else if (f === "approved") btn.className = "btn btn-xs btn-primary text-white fw-bold py-1 px-2 filter-pill-history active";
+            else if (f === "production") btn.className = "btn btn-xs btn-info text-dark fw-bold py-1 px-2 filter-pill-history active";
+            else if (f === "completed") btn.className = "btn btn-xs btn-success text-white fw-bold py-1 px-2 filter-pill-history active";
+            else if (f === "shipped") btn.className = "btn btn-xs btn-dark text-white fw-bold py-1 px-2 filter-pill-history active";
+        } else {
+            btn.classList.remove("active");
+            if (f === "pending") btn.className = "btn btn-xs btn-outline-warning text-dark fw-bold py-1 px-2 filter-pill-history";
+            else if (f === "approved") btn.className = "btn btn-xs btn-outline-primary fw-bold py-1 px-2 filter-pill-history";
+            else if (f === "production") btn.className = "btn btn-xs btn-outline-info text-dark fw-bold py-1 px-2 filter-pill-history";
+            else if (f === "completed") btn.className = "btn btn-xs btn-outline-success fw-bold py-1 px-2 filter-pill-history";
+            else if (f === "shipped") btn.className = "btn btn-xs btn-outline-dark fw-bold py-1 px-2 filter-pill-history";
+            else if (f === "rejected") btn.className = "btn btn-xs btn-outline-danger fw-bold py-1 px-2 filter-pill-history";
+            else if (f === "cancelled") btn.className = "btn btn-xs btn-outline-secondary fw-bold py-1 px-2 filter-pill-history";
+            else btn.className = "btn btn-xs btn-outline-dark fw-bold py-1 px-2 filter-pill-history";
+        }
+    });
+}
+
+function filterAndSortHistoryOrders() {
+    const searchInput = document.getElementById("historyOrderSearchInput");
+    const statusSelect = document.getElementById("historyOrderStatusFilter");
+    const sortSelect = document.getElementById("historyOrderSortSelect");
+    const tbody = document.getElementById("historyOrdersTbody");
+    const countBadge = document.getElementById("historyOrderCountBadge");
+    const emptyRow = document.getElementById("historyOrderEmptySearchRow");
+    if (!tbody) return;
+
+    const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
+    const filterCat = statusSelect ? statusSelect.value : "all";
+    const sortKey = sortSelect ? sortSelect.value : "id_desc";
+    const rows = Array.from(tbody.querySelectorAll("tr.history-order-row"));
+
+    syncHistoryOrderPill(filterCat);
+
+    let visibleCount = 0;
+    rows.forEach(row => {
+        const itemCat = row.dataset.statusCategory || "";
+        const itemStatus = (row.dataset.status || "").toLowerCase();
+
+        let matchesStatus = (filterCat === "all");
+        if (!matchesStatus) {
+            if (filterCat === "cancelled") {
+                matchesStatus = (itemCat === "cancelled" || itemStatus.includes("cancel") || itemStatus.includes("batal"));
+            } else if (filterCat === "rejected") {
+                matchesStatus = (itemCat === "rejected" || itemStatus.includes("reject") || itemStatus.includes("tolak"));
+            } else if (filterCat === "pending") {
+                matchesStatus = (itemCat === "pending" || itemStatus.includes("pending") || itemStatus.includes("menunggu"));
+            } else if (filterCat === "approved") {
+                matchesStatus = (itemCat === "approved" || itemStatus.includes("approved by manager"));
+            } else if (filterCat === "production") {
+                matchesStatus = (itemCat === "production" || itemStatus === "in production" || itemStatus === "approved");
+            } else if (filterCat === "completed") {
+                matchesStatus = (itemCat === "completed" || itemStatus === "completed");
+            } else if (filterCat === "shipped") {
+                matchesStatus = (itemCat === "shipped" || itemStatus === "shipped");
+            } else {
+                matchesStatus = (itemCat === filterCat);
+            }
+        }
+
+        const textToSearch = [
+            row.dataset.orderId || "",
+            row.dataset.product || "",
+            row.dataset.status || "",
+            row.dataset.date || "",
+            row.dataset.total || ""
+        ].join(" ").toLowerCase();
+
+        const matchesQuery = !query || textToSearch.includes(query);
+
+        if (matchesStatus && matchesQuery) {
+            row.style.display = "";
+            visibleCount++;
+        } else {
+            row.style.display = "none";
+        }
+    });
+
+    rows.sort((a, b) => {
+        if (sortKey === "id_desc") return (b.dataset.orderId || "").localeCompare(a.dataset.orderId || "");
+        if (sortKey === "id_asc") return (a.dataset.orderId || "").localeCompare(b.dataset.orderId || "");
+        if (sortKey === "total_desc") return (parseFloat(b.dataset.total) || 0) - (parseFloat(a.dataset.total) || 0);
+        if (sortKey === "total_asc") return (parseFloat(a.dataset.total) || 0) - (parseFloat(b.dataset.total) || 0);
+        if (sortKey === "qty_desc") return (parseFloat(b.dataset.qty) || 0) - (parseFloat(a.dataset.qty) || 0);
+        if (sortKey === "qty_asc") return (parseFloat(a.dataset.qty) || 0) - (parseFloat(b.dataset.qty) || 0);
+        if (sortKey === "date_asc") return (a.dataset.date || "").localeCompare(b.dataset.date || "");
+        if (sortKey === "date_desc") return (b.dataset.date || "").localeCompare(a.dataset.date || "");
+        if (sortKey === "product_asc") return (a.dataset.product || "").localeCompare(b.dataset.product || "");
+        return 0;
+    });
+
+    rows.forEach(r => tbody.appendChild(r));
+    if (emptyRow) {
+        tbody.appendChild(emptyRow);
+        if (visibleCount === 0 && rows.length > 0) {
+            emptyRow.classList.remove("d-none");
+        } else {
+            emptyRow.classList.add("d-none");
+        }
+    }
+
+    if (countBadge) {
+        countBadge.textContent = `Menampilkan ${visibleCount} dari ${rows.length} riwayat pesanan`;
+    }
+}
+
+function clearHistoryOrdersSearch() {
+    const input = document.getElementById("historyOrderSearchInput");
+    if (input) input.value = "";
+    const select = document.getElementById("historyOrderStatusFilter");
+    if (select) select.value = "all";
+    filterAndSortHistoryOrders();
+}
+
+// ================= SEARCH, FILTER & SORT FOR USER ORDER PROGRESS =================
+function setOrderProgressFilter(filterValue, btnEl) {
+    const select = document.getElementById("orderProgressStatusFilter");
+    if (select) select.value = filterValue;
+    syncOrderProgressPill(filterValue);
+    filterAndSortOrderProgress();
+}
+
+function syncOrderProgressPill(filterValue) {
+    document.querySelectorAll(".filter-pill-progress").forEach(btn => {
+        const f = btn.dataset.filter;
+        if (f === filterValue) {
+            btn.classList.add("active");
+            if (f === "all") btn.className = "btn btn-xs btn-dark text-white fw-bold py-1 px-2 filter-pill-progress active";
+            else if (f === "cancelled") btn.className = "btn btn-xs btn-secondary text-white fw-bold py-1 px-2 filter-pill-progress active";
+            else if (f === "rejected") btn.className = "btn btn-xs btn-danger text-white fw-bold py-1 px-2 filter-pill-progress active";
+            else if (f === "pending") btn.className = "btn btn-xs btn-warning text-dark fw-bold py-1 px-2 filter-pill-progress active";
+            else if (f === "approved") btn.className = "btn btn-xs btn-primary text-white fw-bold py-1 px-2 filter-pill-progress active";
+            else if (f === "production") btn.className = "btn btn-xs btn-info text-dark fw-bold py-1 px-2 filter-pill-progress active";
+            else if (f === "completed") btn.className = "btn btn-xs btn-success text-white fw-bold py-1 px-2 filter-pill-progress active";
+            else if (f === "shipped") btn.className = "btn btn-xs btn-dark text-white fw-bold py-1 px-2 filter-pill-progress active";
+        } else {
+            btn.classList.remove("active");
+            if (f === "pending") btn.className = "btn btn-xs btn-outline-warning text-dark fw-bold py-1 px-2 filter-pill-progress";
+            else if (f === "approved") btn.className = "btn btn-xs btn-outline-primary fw-bold py-1 px-2 filter-pill-progress";
+            else if (f === "production") btn.className = "btn btn-xs btn-outline-info text-dark fw-bold py-1 px-2 filter-pill-progress";
+            else if (f === "completed") btn.className = "btn btn-xs btn-outline-success fw-bold py-1 px-2 filter-pill-progress";
+            else if (f === "shipped") btn.className = "btn btn-xs btn-outline-dark fw-bold py-1 px-2 filter-pill-progress";
+            else if (f === "rejected") btn.className = "btn btn-xs btn-outline-danger fw-bold py-1 px-2 filter-pill-progress";
+            else if (f === "cancelled") btn.className = "btn btn-xs btn-outline-secondary fw-bold py-1 px-2 filter-pill-progress";
+            else btn.className = "btn btn-xs btn-outline-dark fw-bold py-1 px-2 filter-pill-progress";
+        }
+    });
+}
+
+function filterAndSortOrderProgress() {
+    const searchInput = document.getElementById("orderProgressSearchInput");
+    const statusSelect = document.getElementById("orderProgressStatusFilter");
+    const sortSelect = document.getElementById("orderProgressSortSelect");
+    const container = document.getElementById("orderProgressCardsContainer");
+    const countBadge = document.getElementById("orderProgressCountBadge");
+    const emptyCard = document.getElementById("orderProgressEmptySearchCard");
+    if (!container) return;
+
+    const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
+    const filterCat = statusSelect ? statusSelect.value : "all";
+    const sortKey = sortSelect ? sortSelect.value : "id_desc";
+    const cards = Array.from(container.querySelectorAll(".order-progress-card"));
+
+    syncOrderProgressPill(filterCat);
+
+    let visibleCount = 0;
+    cards.forEach(card => {
+        const itemCat = card.dataset.statusCategory || "";
+        const itemStatus = (card.dataset.status || "").toLowerCase();
+
+        let matchesStatus = (filterCat === "all");
+        if (!matchesStatus) {
+            if (filterCat === "cancelled") {
+                matchesStatus = (itemCat === "cancelled" || itemStatus.includes("cancel") || itemStatus.includes("batal"));
+            } else if (filterCat === "rejected") {
+                matchesStatus = (itemCat === "rejected" || itemStatus.includes("reject") || itemStatus.includes("tolak"));
+            } else if (filterCat === "pending") {
+                matchesStatus = (itemCat === "pending" || itemStatus.includes("pending") || itemStatus.includes("menunggu"));
+            } else if (filterCat === "approved") {
+                matchesStatus = (itemCat === "approved" || itemStatus.includes("approved by manager"));
+            } else if (filterCat === "production") {
+                matchesStatus = (itemCat === "production" || itemStatus === "in production" || itemStatus === "approved");
+            } else if (filterCat === "completed") {
+                matchesStatus = (itemCat === "completed" || itemStatus === "completed");
+            } else if (filterCat === "shipped") {
+                matchesStatus = (itemCat === "shipped" || itemStatus === "shipped");
+            } else {
+                matchesStatus = (itemCat === filterCat);
+            }
+        }
+
+        const textToSearch = [
+            card.dataset.orderId || "",
+            card.dataset.product || "",
+            card.dataset.status || "",
+            card.dataset.date || "",
+            card.dataset.total || ""
+        ].join(" ").toLowerCase();
+
+        const matchesQuery = !query || textToSearch.includes(query);
+
+        if (matchesStatus && matchesQuery) {
+            card.style.display = "";
+            visibleCount++;
+        } else {
+            card.style.display = "none";
+        }
+    });
+
+    cards.sort((a, b) => {
+        if (sortKey === "id_desc") return (b.dataset.orderId || "").localeCompare(a.dataset.orderId || "");
+        if (sortKey === "id_asc") return (a.dataset.orderId || "").localeCompare(b.dataset.orderId || "");
+        if (sortKey === "total_desc") return (parseFloat(b.dataset.total) || 0) - (parseFloat(a.dataset.total) || 0);
+        if (sortKey === "total_asc") return (parseFloat(a.dataset.total) || 0) - (parseFloat(b.dataset.total) || 0);
+        if (sortKey === "qty_desc") return (parseFloat(b.dataset.qty) || 0) - (parseFloat(a.dataset.qty) || 0);
+        if (sortKey === "qty_asc") return (parseFloat(a.dataset.qty) || 0) - (parseFloat(b.dataset.qty) || 0);
+        if (sortKey === "date_asc") return (a.dataset.date || "").localeCompare(b.dataset.date || "");
+        if (sortKey === "date_desc") return (b.dataset.date || "").localeCompare(a.dataset.date || "");
+        if (sortKey === "product_asc") return (a.dataset.product || "").localeCompare(b.dataset.product || "");
+        return 0;
+    });
+
+    cards.forEach(c => container.appendChild(c));
+    if (emptyCard) {
+        container.appendChild(emptyCard);
+        if (visibleCount === 0 && cards.length > 0) {
+            emptyCard.classList.remove("d-none");
+        } else {
+            emptyCard.classList.add("d-none");
+        }
+    }
+
+    if (countBadge) {
+        countBadge.textContent = `Menampilkan ${visibleCount} dari ${cards.length} pesanan dipantau`;
+    }
+}
+
+function clearOrderProgressSearch() {
+    const input = document.getElementById("orderProgressSearchInput");
+    if (input) input.value = "";
+    const select = document.getElementById("orderProgressStatusFilter");
+    if (select) select.value = "all";
+    filterAndSortOrderProgress();
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    const chatModalEl = document.getElementById("chatModal");
+    if (chatModalEl) {
+        chatModalEl.addEventListener("shown.bs.modal", function() {
+            const box = document.getElementById("chatBoxModal");
+            if (box) box.scrollTop = box.scrollHeight;
+            fetchUserChats();
+            if (!userChatPollInterval) {
+                userChatPollInterval = setInterval(fetchUserChats, 3000);
+            }
+        });
+
+        chatModalEl.addEventListener("hidden.bs.modal", function() {
+            if (userChatPollInterval) {
+                clearInterval(userChatPollInterval);
+                userChatPollInterval = null;
+            }
+        });
+    }
+
+    const cartModalEl = document.getElementById("cartModal");
+    if (cartModalEl) {
+        cartModalEl.addEventListener("shown.bs.modal", function() {
+            fetchCartData();
+        });
+    }
+
+    const form = document.getElementById("ajaxChatForm");
+    if (form) {
+        form.addEventListener("submit", sendChatAjax);
+    }
+});
+</script>
+{% endblock %}

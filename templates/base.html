@@ -1,0 +1,1903 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMP Store - Industrial B2B Manufacturing</title>
+    <link rel="icon" type="image/png" href="/img/DMP Final.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ind-dark: #09131c;
+            --ind-blue: #1e3d59;
+            --ind-orange: #ff6f3c;
+            --ind-bg: #f8fafc;
+            --brutal-border: 2px solid #0f172a;
+            --brutal-shadow: 4px 4px 0px #0f172a;
+            --smooth-ease: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        html.lenis, html.lenis body {
+            height: auto;
+        }
+        .lenis.lenis-smooth {
+            scroll-behavior: auto !important;
+        }
+        .lenis.lenis-stopped {
+            overflow: hidden !important;
+        }
+
+        /* Kunci scroll halaman belakang secara paksa saat pop-up modal aktif */
+        body.modal-open {
+            overflow: hidden !important;
+            transform: none !important;
+            overscroll-behavior: none;
+        }
+
+        /* ========================================================
+           UNIVERSAL MODAL SCROLLING & RESPONSIVENESS FIX
+           ======================================================== */
+        /* Pastikan modal fixed tepat pada viewport, tidak terpengaruh scroll halaman */
+        .modal {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 1060 !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+
+        .modal-backdrop {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 1055 !important;
+        }
+
+        /* Dialog modal selalu terpusat di layar pengguna saat dibuka */
+        .modal-dialog {
+            max-height: calc(100vh - 2.5rem);
+            margin: 1.25rem auto;
+            display: flex;
+            flex-direction: column;
+            pointer-events: auto;
+        }
+
+        /* Hilangkan bug centered pseudo ::before bawaan Bootstrap yang merusak flexbox scrollable */
+        .modal-dialog-centered::before {
+            display: none !important;
+            content: none !important;
+            height: 0 !important;
+        }
+
+        .modal-dialog-centered {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: calc(100vh - 2.5rem) !important;
+            margin-top: auto !important;
+            margin-bottom: auto !important;
+        }
+
+        /* Modal content terkunci dalam max-height dan bertindak sebagai flexbox */
+        .modal-content {
+            max-height: calc(100vh - 2.5rem) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            position: relative;
+        }
+
+        /* Jika modal-content membungkus <form>, jadikan form sebagai flex-column juga */
+        .modal-content > form {
+            display: flex !important;
+            flex-direction: column !important;
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            max-height: 100% !important;
+            overflow: hidden !important;
+        }
+
+        /* Modal header dan footer tetap di tempat (tidak ikut tergulung) */
+        .modal-header,
+        .modal-footer {
+            flex-shrink: 0 !important;
+        }
+
+        /* Modal body fleksibel dan WAJIB bisa di-scroll dengan scrollbar yang responsif */
+        .modal-body {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            max-height: calc(100vh - 170px) !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            overscroll-behavior: contain !important;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #0f172a #f1f5f9;
+        }
+
+        /* Gaya scrollbar modern industrial brutalist */
+        .modal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+        .modal-body::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .modal-body::-webkit-scrollbar-thumb {
+            background-color: #0f172a;
+            border-radius: 4px;
+            border: 2px solid #f1f5f9;
+        }
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background-color: #ff6f3c;
+        }
+
+        body {
+            background-color: var(--ind-bg);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #0f172a;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+            opacity: 0;
+            transform: none !important;
+            transition: opacity 0.4s var(--smooth-ease);
+        }
+        body.page-loaded {
+            opacity: 1;
+            transform: none !important;
+        }
+        body.page-exiting {
+            opacity: 0;
+            transform: none !important;
+        }
+
+        main {
+            flex: 1;
+        }
+
+        .reveal-item {
+            opacity: 0;
+            transform: translateY(36px) scale(0.98);
+            transition: opacity 0.85s var(--smooth-ease), transform 0.85s var(--smooth-ease);
+            will-change: opacity, transform;
+        }
+        .reveal-item.is-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .navbar-industrial {
+            background-color: rgba(255, 255, 255, 0.92) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 3px solid #0f172a;
+            padding: 12px 0;
+            transition: all 0.4s var(--smooth-ease);
+        }
+        .navbar-brand {
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #0f172a !important;
+        }
+        .nav-link-custom {
+            position: relative;
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-decoration: none;
+            margin: 0 14px;
+            padding: 4px 0;
+            transition: color 0.3s var(--smooth-ease);
+        }
+        .nav-link-custom::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2.5px;
+            background-color: var(--ind-orange);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.4s var(--smooth-ease);
+        }
+        .nav-link-custom:hover {
+            color: var(--ind-orange);
+        }
+        .nav-link-custom:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+
+        .icon-btn-nav {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            background: #ffffff;
+            border: 2px solid #0f172a;
+            border-radius: 8px;
+            box-shadow: 2px 2px 0px #0f172a;
+            color: #0f172a;
+            transition: transform 0.35s var(--smooth-ease), box-shadow 0.35s var(--smooth-ease), background-color 0.25s ease, border-color 0.25s ease;
+            cursor: pointer;
+        }
+        .icon-btn-nav:hover {
+            background-color: #fff7ed;
+            border-color: var(--ind-orange);
+            transform: translate(-3px, -3px);
+            box-shadow: 5px 5px 0px #0f172a;
+        }
+        .icon-btn-nav:active {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0px #0f172a;
+        }
+        .icon-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background-color: var(--ind-orange);
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 50px;
+            border: 2px solid #0f172a;
+            transition: transform 0.3s var(--smooth-ease);
+        }
+        .icon-btn-nav:hover .icon-badge {
+            transform: scale(1.15);
+        }
+
+        .card {
+            border: var(--brutal-border);
+            border-radius: 10px;
+            box-shadow: var(--brutal-shadow);
+            background-color: #ffffff;
+            transition: transform 0.45s var(--smooth-ease), box-shadow 0.45s var(--smooth-ease), border-color 0.3s ease;
+        }
+        .card:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 8px 8px 0px #0f172a;
+        }
+        .product-img-wrapper {
+            overflow: hidden;
+            border-radius: 6px;
+            border: 2px solid #0f172a;
+        }
+        .product-img-wrapper img {
+            transition: transform 0.7s var(--smooth-ease);
+        }
+        .card:hover .product-img-wrapper img {
+            transform: scale(1.08);
+        }
+
+        .btn-industrial {
+            background-color: var(--ind-orange);
+            color: #ffffff;
+            font-weight: 700;
+            border: var(--brutal-border);
+            border-radius: 6px;
+            box-shadow: 3px 3px 0px #0f172a;
+            transition: transform 0.35s var(--smooth-ease), box-shadow 0.35s var(--smooth-ease), background-color 0.25s ease;
+        }
+        .btn-industrial:hover {
+            background-color: #f55e28;
+            color: #ffffff;
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px #0f172a;
+        }
+        .btn-industrial:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #0f172a;
+        }
+        /* Tombol Hijau (Baik / Terima / Simpan / Acc) */
+        .btn-good {
+            background-color: #16a34a;
+            color: #ffffff;
+            font-weight: 700;
+            border: var(--brutal-border);
+            border-radius: 6px;
+            box-shadow: 3px 3px 0px #0f172a;
+            transition: transform 0.35s var(--smooth-ease), box-shadow 0.35s var(--smooth-ease), background-color 0.25s ease;
+        }
+        .btn-good:hover {
+            background-color: #15803d;
+            color: #ffffff;
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0px #0f172a;
+        }
+        .btn-good:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #0f172a;
+        }
+
+        /* Tombol Merah (Jelek / Tolak / Hapus) */
+        .btn-bad {
+            background-color: #dc2626;
+            color: #ffffff;
+            font-weight: 700;
+            border: var(--brutal-border);
+            border-radius: 6px;
+            box-shadow: 3px 3px 0px #0f172a;
+            transition: transform 0.35s var(--smooth-ease), box-shadow 0.35s var(--smooth-ease), background-color 0.25s ease;
+        }
+        .btn-bad:hover {
+            background-color: #b91c1c;
+            color: #ffffff;
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0px #0f172a;
+        }
+        .btn-bad:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #0f172a;
+        }
+
+        /* Tombol Biru (Edit / Update / Input Data) */
+        .btn-edit {
+            background-color: #2563eb;
+            color: #ffffff;
+            font-weight: 700;
+            border: var(--brutal-border);
+            border-radius: 6px;
+            box-shadow: 3px 3px 0px #0f172a;
+            transition: transform 0.35s var(--smooth-ease), box-shadow 0.35s var(--smooth-ease), background-color 0.25s ease;
+        }
+        .btn-edit:hover {
+            background-color: #1d4ed8;
+            color: #ffffff;
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0px #0f172a;
+        }
+        .btn-edit:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #0f172a;
+        }
+
+        .modal.fade .modal-dialog {
+            transform: translateY(30px) scale(0.95);
+            opacity: 0;
+            transition: transform 0.45s var(--smooth-ease), opacity 0.35s var(--smooth-ease);
+        }
+        .modal.show .modal-dialog {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        .modal-body {
+            overscroll-behavior: contain;
+        }
+
+        .chat-box {
+            height: 320px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            background: #ffffff;
+            border: var(--brutal-border);
+            border-radius: 8px;
+            padding: 15px;
+            scroll-behavior: smooth;
+        }
+        @keyframes bubblePop {
+            0% { opacity: 0; transform: translateY(12px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .msg-user, .msg-bot, .msg-supervisi {
+            border: 2px solid #0f172a;
+            border-radius: 8px;
+            padding: 8px 12px;
+            max-width: 80%;
+            font-weight: 600;
+            animation: bubblePop 0.35s var(--smooth-ease) forwards;
+        }
+        .msg-user {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            margin-left: auto;
+        }
+        .msg-bot {
+            background-color: #f1f5f9;
+            color: #334155;
+        }
+        .msg-supervisi {
+            background-color: #ffedd5;
+            color: #c2410c;
+        }
+
+        /* ================= FOOTER SCENIC INDUSTRIAL STYLE ================= */
+        .footer-scenic-wrapper {
+            margin-top: 40px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .footer-svg-scene {
+            display: block;
+            width: 100%;
+            height: auto;
+            margin-bottom: -2px;
+        }
+        .footer-main {
+            background-color: var(--ind-dark);
+            color: #ffffff;
+            padding: 20px 0 35px 0;
+        }
+        .footer-heading {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #ffffff;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.7);
+            max-width: 180px;
+        }
+        .footer-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .footer-links li {
+            margin-bottom: 8px;
+        }
+        .footer-links a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            transition: color 0.25s ease, transform 0.3s var(--smooth-ease);
+        }
+        .footer-links a:hover {
+            color: var(--ind-orange);
+            transform: translateX(5px);
+        }
+        .social-circle-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            color: #ffffff;
+            text-decoration: none;
+            margin: 0 6px;
+            transition: all 0.35s var(--smooth-ease);
+        }
+        .social-circle-btn:hover {
+            background-color: var(--ind-orange);
+            border-color: var(--ind-orange);
+            color: #ffffff;
+            transform: translateY(-4px) scale(1.06);
+        }
+        .footer-contact-info p {
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            padding-top: 22px;
+            margin-top: 30px;
+            font-size: 0.78rem;
+            color: #94a3b8;
+        }
+        .footer-bottom a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            margin-right: 18px;
+            transition: color 0.2s ease;
+        }
+        .footer-bottom a:hover {
+            color: var(--ind-orange);
+        }
+        .pay-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 10px;
+            font-weight: 800;
+            border-radius: 4px;
+            margin-right: 5px;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-industrial sticky-top mb-4">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/img/DMP Final.png" alt="DMP Store" style="height: 38px; width: auto; object-fit: contain;" class="me-2">
+                <span><strong style="color: #0f172a; font-weight: 800;">DMP</strong> <span style="color: #ff6f3c; font-weight: 800;">STORE</span> <small class="text-muted fw-bold d-none d-sm-inline" style="font-size: 11px;">| B2B MANUFACTURING</small></span>
+            </a>
+
+            {% block navbar_center %}{% endblock %}
+
+            {% if session.get('username') %}
+            <div class="d-flex align-items-center gap-2">
+                {% block navbar_icons %}
+                    {% if session.get('role') == 'manager' %}
+                    <!-- 1. Icon Persetujuan (ACC) Order Customer Baru -->
+                    <button type="button" class="icon-btn-nav position-relative" data-bs-toggle="modal" data-bs-target="#managerOrderAccModal" title="Persetujuan (ACC) Order Masuk">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                            <path d="M9 14l2 2 4-4"></path>
+                        </svg>
+                        <span id="managerPendingAccBadge" class="icon-badge bg-danger text-white {% if not manager_pending_acc_count or manager_pending_acc_count == 0 %}d-none{% endif %}" title="{{ manager_pending_acc_count or 0 }} order menunggu ACC">{{ manager_pending_acc_count or 0 }}</span>
+                    </button>
+
+                    <!-- 2. Icon Notifikasi Shipping & Produksi Selesai -->
+                    <button type="button" class="icon-btn-nav position-relative" data-bs-toggle="modal" data-bs-target="#managerShippedModal" title="Notifikasi Shipping & Produksi Selesai (Detail A-Z)">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="1" y="3" width="15" height="13"></rect>
+                            <polygon points="16 8 20 8 23 11 23 16 16 16 8"></polygon>
+                            <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                            <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                        </svg>
+                        <span id="managerShippedBadge" class="icon-badge bg-success text-white {% if not manager_shipped_count or manager_shipped_count == 0 %}d-none{% endif %}" title="{{ manager_shipped_count or 0 }} pesanan telah selesai & dikirim">{{ manager_shipped_count or 0 }}</span>
+                    </button>
+                    {% endif %}
+                {% endblock %}
+                <div class="vr mx-2 bg-dark opacity-100" style="width: 2px; height: 28px;"></div>
+                <span class="small d-none d-lg-inline fw-bold me-2">
+                    {{ session.get('name') }}
+                    <span class="badge bg-warning text-dark border border-dark ms-1 text-uppercase">{{ session.get('role') }}</span>
+                </span>
+                <a href="{{ url_for('logout') }}" class="btn btn-dark btn-sm fw-bold rounded-1">LOGOUT</a>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main class="container pb-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show fw-bold shadow-sm reveal-item" role="alert" style="border: 2px solid #0f172a; box-shadow: 3px 3px 0px #0f172a;">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ================= SCENIC LAYERED FOOTER ================= -->
+    <div class="footer-scenic-wrapper">
+        <svg class="footer-svg-scene" viewBox="0 0 1440 310" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <path d="M0 240 L120 150 L230 195 L380 95 L510 165 L690 45 L860 155 L990 105 L1140 165 L1290 85 L1440 160 L1440 310 L0 310 Z" fill="#6488a4"/>
+            
+            <rect x="240" y="175" width="70" height="60" fill="#3b5f7c"/>
+            <polygon points="235,175 275,145 315,175" fill="#2a475e"/>
+            <rect x="260" y="135" width="8" height="45" fill="#2a475e"/>
+            <rect x="290" y="150" width="6" height="30" fill="#2a475e"/>
+
+            <rect x="1020" y="165" width="90" height="70" fill="#3b5f7c"/>
+            <path d="M1010 165 L1065 130 L1120 165 Z" fill="#2a475e"/>
+            <rect x="1040" y="115" width="10" height="55" fill="#2a475e"/>
+            <rect x="1075" y="125" width="8" height="45" fill="#2a475e"/>
+
+            <path d="M0 265 L95 190 L215 230 L345 140 L495 215 L635 125 L790 210 L945 130 L1085 210 L1235 140 L1365 205 L1440 175 L1440 310 L0 310 Z" fill="#3b5f7c"/>
+            
+            <rect x="415" y="200" width="55" height="55" fill="#2a475e"/>
+            <path d="M415 200 Q442 185 470 200 Z" fill="#1e3d59"/>
+            
+            <rect x="885" y="195" width="60" height="55" fill="#2a475e"/>
+            <path d="M885 195 Q915 180 945 195 Z" fill="#1e3d59"/>
+
+            <path d="M0 285 L60 235 L130 265 L210 205 L290 255 L390 195 L480 250 L580 185 L680 245 L775 190 L880 250 L980 195 L1090 255 L1190 190 L1300 250 L1390 210 L1440 240 L1440 310 L0 310 Z" fill="#1e3d59"/>
+
+            <rect x="510" y="235" width="90" height="45" fill="#142838"/>
+            <polygon points="505,235 555,205 605,235" fill="#0f172a"/>
+            <rect x="535" y="195" width="6" height="42" fill="#0f172a"/>
+
+            <rect x="790" y="230" width="95" height="45" fill="#142838"/>
+            <polygon points="785,230 837,200 890,230" fill="#0f172a"/>
+            <rect x="845" y="190" width="6" height="42" fill="#0f172a"/>
+
+            <path d="M785 105 Q790 98 795 104 Q800 98 805 105" stroke="#09131c" stroke-width="2" fill="none"/>
+            <path d="M812 92 Q816 86 820 91 Q824 86 828 92" stroke="#09131c" stroke-width="1.8" fill="none"/>
+            <path d="M835 108 Q839 103 843 107 Q847 103 851 108" stroke="#09131c" stroke-width="1.8" fill="none"/>
+
+            <polygon points="690,72 630,102 750,102" fill="#09131c"/>
+            <rect x="687" y="55" width="6" height="20" fill="#09131c"/>
+            <rect x="648" y="102" width="84" height="26" fill="#09131c"/>
+            <rect x="636" y="124" width="108" height="6" fill="#09131c"/>
+            <rect x="638" y="114" width="4" height="12" fill="#09131c"/>
+            <rect x="738" y="114" width="4" height="12" fill="#09131c"/>
+            <rect x="658" y="108" width="16" height="10" fill="#ff6f3c"/>
+            <rect x="682" y="108" width="16" height="10" fill="#ff6f3c"/>
+            <rect x="706" y="108" width="16" height="10" fill="#ff6f3c"/>
+            <line x1="655" y1="130" x2="640" y2="295" stroke="#09131c" stroke-width="6"/>
+            <line x1="725" y1="130" x2="740" y2="295" stroke="#09131c" stroke-width="6"/>
+            <line x1="675" y1="130" x2="670" y2="295" stroke="#09131c" stroke-width="3.5"/>
+            <line x1="705" y1="130" x2="710" y2="295" stroke="#09131c" stroke-width="3.5"/>
+            <line x1="653" y1="160" x2="727" y2="160" stroke="#09131c" stroke-width="4"/>
+            <line x1="649" y1="200" x2="731" y2="200" stroke="#09131c" stroke-width="4"/>
+            <line x1="645" y1="245" x2="735" y2="245" stroke="#09131c" stroke-width="4"/>
+            <line x1="655" y1="130" x2="727" y2="160" stroke="#09131c" stroke-width="3"/>
+            <line x1="725" y1="130" x2="653" y2="160" stroke="#09131c" stroke-width="3"/>
+            <line x1="653" y1="160" x2="731" y2="200" stroke="#09131c" stroke-width="3"/>
+            <line x1="727" y1="160" x2="649" y2="200" stroke="#09131c" stroke-width="3"/>
+            <path d="M735 135 Q810 195 905 180" stroke="#09131c" stroke-width="2" fill="none"/>
+            <line x1="905" y1="175" x2="905" y2="290" stroke="#09131c" stroke-width="4"/>
+
+            <path d="M0 310 L0 265 L25 230 L45 268 L70 215 L95 270 L125 225 L150 272 L185 195 L215 265 L250 220 L280 275 L320 210 L355 270 L390 225 L425 278 L465 205 L500 272 L535 220 L570 275 L610 215 L645 278 L690 235 L735 278 L775 210 L815 275 L855 195 L895 272 L935 225 L975 278 L1015 210 L1055 272 L1095 220 L1135 278 L1180 195 L1220 270 L1260 220 L1300 275 L1345 205 L1385 270 L1415 230 L1440 265 L1440 310 Z" fill="#09131c"/>
+        </svg>
+
+        <footer class="footer-main">
+            <div class="container">
+                <div class="row g-4 align-items-end">
+                    <div class="col-6 col-md-2">
+                        <div class="footer-heading">Navigasi</div>
+                        <ul class="footer-links">
+                            <li><a href="#heroSection">Beranda Utama</a></li>
+                            <li><a href="#koleksiSection">Koleksi Produk</a></li>
+                            <li><a href="#katalogSection">Katalog B2B</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="col-6 col-md-2">
+                        <div class="footer-heading">Manufaktur</div>
+                        <ul class="footer-links">
+                            <li><a href="#katalogSection">Lini Produksi</a></li>
+                            <li><a href="#keunggulanSection">Standar OEE</a></li>
+                            <li><a href="#keunggulanSection">Kemitraan Brand</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <div class="footer-heading">Legal & Kebijakan</div>
+                        <ul class="footer-links">
+                            <li><a href="#">EULA Manufaktur</a></li>
+                            <li><a href="#">Privacy Policy</a></li>
+                            <li><a href="#">Terms & Conditions</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="col-6 col-md-2 text-md-center pb-2">
+                        <a href="mailto:support@dmpstore.id" class="social-circle-btn" title="Email Kami">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-circle-btn" title="Facebook">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7v4h3V22h4v-8.5z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-circle-btn" title="Instagram">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <div class="col-12 col-md-3 text-md-end footer-contact-info">
+                        <h5 class="fw-extrabold text-white mb-2">DMPStore.id</h5>
+                        <p>Kawasan Industri Jl. Merdeka No. 10</p>
+                        <p>40115, Bandung, Indonesia</p>
+                        <p>tel.: +62 812 3456 7890</p>
+                        <p>email: support@dmpstore.id</p>
+                    </div>
+                </div>
+
+                <div class="footer-bottom">
+                    <div class="row align-items-center g-3">
+                        <div class="col-md-5 d-flex flex-wrap align-items-center">
+                            <img src="/img/DMP Final.png" alt="DMP Store" style="height: 32px; width: auto; object-fit: contain; filter: brightness(1.1);" class="me-3">
+                            <span class="fs-4 fw-extrabold text-white me-4">
+                                DMP<span style="color: #ff6f3c;">Store</span><sup class="text-secondary ms-1" style="font-size: 11px;">®</sup>
+                            </span>
+                            <a href="#">End User License Agreement</a>
+                            <a href="#">Privacy Policy</a>
+                            <a href="#">Terms & Conditions</a>
+                        </div>
+
+                        <div class="col-md-3 text-md-center">
+                            <span class="pay-badge" style="background: #eb001b; color: #fff;">MASTER</span>
+                            <span class="pay-badge" style="background: #1a1f71; color: #fff;">VISA</span>
+                            <span class="pay-badge" style="background: #003087; color: #fff;">PAYPAL</span>
+                            <span class="pay-badge" style="background: #2566af; color: #fff;">B2B-INV</span>
+                        </div>
+
+                        <div class="col-md-4 text-md-end text-light opacity-75">
+                            Coded and designed for DMP Manufacturing. All rights reserved to DMPStore.id
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- GLOBAL MODAL: DETAIL REAL-TIME BAHAN BAKU (UNTUK SEMUA ROLE) -->
+    <div class="modal fade" id="materialDetailModal" tabindex="-1" style="z-index: 1085;">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 12px; box-shadow: 6px 6px 0px #0f172a;">
+                <div class="modal-header bg-dark text-white py-3">
+                    <div>
+                        <span class="badge bg-warning text-dark border border-dark fw-bold mb-1">// INFORMASI REAL-TIME INVENTORY</span>
+                        <h5 class="modal-title fw-extrabold mb-0" id="matDetailTitle">Detail Bahan Baku</h5>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <!-- Real-time Clock Badge -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-white border border-dark rounded">
+                        <span class="small fw-bold text-muted"><i class="bi bi-clock me-1"></i> Waktu Sinkronisasi Real-Time:</span>
+                        <span id="matDetailTimestamp" class="small font-monospace fw-bold text-dark">-</span>
+                    </div>
+
+                    <!-- 4 Metrics Cards Grid -->
+                    <div class="row g-3 mb-4">
+                        <!-- 1. Bahan yang Tersisa (Gudang) -->
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card p-3 h-100 border-2" style="border-color: #16a34a !important; background-color: #f0fdf4;">
+                                <div class="small fw-bold text-success mb-1">1. SISA DI GUDANG</div>
+                                <div class="fs-5 fw-extrabold text-dark" id="matDetailStock">-</div>
+                                <small class="text-muted" style="font-size: 11px;">Bahan yang tersisa saat ini</small>
+                            </div>
+                        </div>
+                        <!-- 2. Bahan Sedang Dipakai Produksi -->
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card p-3 h-100 border-2" style="border-color: #2563eb !important; background-color: #eff6ff;">
+                                <div class="small fw-bold text-primary mb-1">2. SEDANG DIPRODUKSI</div>
+                                <div class="fs-5 fw-extrabold text-dark" id="matDetailInUse">-</div>
+                                <small class="text-muted" style="font-size: 11px;">Aktif di mesin oleh teknisi</small>
+                            </div>
+                        </div>
+                        <!-- 3. Bahan yang Akan Dipakai Produksi (Order telah di-acc) -->
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card p-3 h-100 border-2" style="border-color: #d97706 !important; background-color: #fffbeb;">
+                                <div class="small fw-bold text-warning-emphasis mb-1">3. AKAN DIPAKAI (DI-ACC)</div>
+                                <div class="fs-5 fw-extrabold text-dark" id="matDetailScheduled">-</div>
+                                <small class="text-muted" style="font-size: 11px;">Order disetujui / WO terjadwal</small>
+                            </div>
+                        </div>
+                        <!-- 4. Yang Akan Dipakai (Telah di-order tapi belum di-acc) -->
+                        <div class="col-sm-6 col-md-3">
+                            <div class="card p-3 h-100 border-2" style="border-color: #ea580c !important; background-color: #fff7ed;">
+                                <div class="small fw-bold text-danger mb-1">4. TELAH DI-ORDER (BELUM ACC)</div>
+                                <div class="fs-5 fw-extrabold text-dark" id="matDetailPending">-</div>
+                                <small class="text-muted" style="font-size: 11px;">Kebutuhan order baru pending</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Info Net Sisa Bersih & Batas Minimum -->
+                    <div class="p-3 bg-white border border-dark rounded mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-6 border-end border-dark">
+                                <span class="small text-muted fw-bold">Sisa Stok Bebas (Setelah dikurangi order di-acc):</span>
+                                <div class="fs-5 fw-extrabold" id="matDetailNetAvailable">-</div>
+                            </div>
+                            <div class="col-md-6 ps-md-3 mt-2 mt-md-0">
+                                <span class="small text-muted fw-bold">Ambang Batas Minimum Gudang:</span>
+                                <div class="fs-5 fw-bold font-monospace" id="matDetailThreshold">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabs/Section: Rincian Order & Work Order Terkait -->
+                    <div class="card p-3">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom pb-2 mb-3">
+                            <h6 class="fw-extrabold mb-0">Rincian Komitmen Order Terkait Bahan Ini</h6>
+                            <div class="input-group input-group-sm" style="max-width: 320px;">
+                                <span class="input-group-text bg-dark text-white border-dark"><i class="bi bi-search"></i></span>
+                                <input type="text" id="matDetailFilterInput" class="form-control border-dark font-monospace" placeholder="Filter rincian order..." oninput="filterMaterialDetailTables()">
+                            </div>
+                        </div>
+                        
+                        <!-- Sub 1: Order Terjadwal / Di-acc -->
+                        <div class="mb-3">
+                            <span class="badge bg-warning text-dark border border-dark mb-1">Akan Dipakai Produksi (Order Disetujui / Terjadwal)</span>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered align-middle small mb-0 bg-white">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>ID WO / Order</th>
+                                            <th>Produk</th>
+                                            <th class="text-center">Qty Target</th>
+                                            <th class="text-end">Alokasi Bahan</th>
+                                            <th>Target Selesai</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="matDetailScheduledTable">
+                                        <tr><td colspan="5" class="text-center text-muted">Tidak ada jadwal aktif</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Sub 2: Order Pending Belum Di-acc -->
+                        <div>
+                            <span class="badge bg-secondary border border-dark mb-1">Telah Di-Order User tapi Belum Di-acc (Pending Verifikasi)</span>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered align-middle small mb-0 bg-white">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>ID Order</th>
+                                            <th>Pemesan</th>
+                                            <th>Produk</th>
+                                            <th class="text-center">Qty</th>
+                                            <th class="text-end">Kebutuhan Bahan</th>
+                                            <th>Tanggal Order</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="matDetailPendingTable">
+                                        <tr><td colspan="6" class="text-center text-muted">Tidak ada order pending</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top border-dark py-2">
+                    <button type="button" class="btn btn-outline-dark fw-bold btn-sm" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if session.get('role') == 'manager' %}
+    <!-- ================= MODAL: PERSETUJUAN (ACC) ORDER CONSUMER (MANAGER) ================= -->
+    <div class="modal fade" id="managerOrderAccModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 12px; box-shadow: 6px 6px 0px #0f172a;">
+                <div class="modal-header bg-dark text-white py-3">
+                    <div>
+                        <span class="badge bg-warning text-dark border border-dark fw-bold mb-1">// MANAGER APPROVAL PANEL</span>
+                        <h5 class="modal-title fw-extrabold mb-0">PERSETUJUAN (ACC) ORDER MASUK DARI CUSTOMER</h5>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <!-- Alert Box Dinamis -->
+                    <div id="managerModalAlertBox" class="alert alert-info border border-dark small mb-3 py-2 d-none"></div>
+
+                    <!-- VIEW 1: DAFTAR ORDER PERSETUJUAN (LIST VIEW) -->
+                    <div id="managerModalListView">
+                        <div class="alert alert-info border border-dark small mb-3 py-2">
+                            <strong>Peran Manager:</strong> Verifikasi kelayakan pesanan konsumen sebelum dialihkan ke <strong>Supervisi Produksi</strong> untuk penjadwalan lini mesin dan pembuatan Work Order.
+                        </div>
+
+                        <!-- SEARCH & SORT TOOLBAR (MANAGER PENDING) -->
+                        <div class="p-3 mb-3 bg-white border border-dark rounded" style="box-shadow: 3px 3px 0px #0f172a;">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-7">
+                                    <label class="form-label small fw-bold text-dark mb-1">
+                                        <i class="bi bi-search me-1"></i>Pencarian Pesanan:
+                                    </label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" id="managerPendingSearchInput" class="form-control border-dark font-monospace" placeholder="Cari ID order, nama klien, kontak, atau produk..." oninput="filterAndSortManagerPendingOrders()">
+                                        <button class="btn btn-outline-dark fw-bold" type="button" onclick="clearManagerPendingSearch()">
+                                            <i class="bi bi-x-circle me-1"></i>Reset
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold text-dark mb-1">
+                                        <i class="bi bi-arrow-down-up me-1"></i>Urutkan Data:
+                                    </label>
+                                    <select id="managerPendingSortSelect" class="form-select form-select-sm border-dark fw-bold" onchange="filterAndSortManagerPendingOrders()">
+                                        <option value="id_desc">ID Order (Terbaru / Z-A)</option>
+                                        <option value="id_asc">ID Order (Terlama / A-Z)</option>
+                                        <option value="total_desc">Total Nilai (Tertinggi)</option>
+                                        <option value="total_asc">Total Nilai (Terendah)</option>
+                                        <option value="qty_desc">Jumlah Qty (Terbanyak)</option>
+                                        <option value="qty_asc">Jumlah Qty (Tersedikit)</option>
+                                        <option value="date_asc">Target Tanggal (Paling Mendesak)</option>
+                                        <option value="date_desc">Target Tanggal (Paling Lama)</option>
+                                        <option value="product_asc">Nama Produk (A-Z)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-light small">
+                                <span id="managerPendingCountBadge" class="badge bg-dark text-white font-monospace">
+                                    Menampilkan {{ manager_pending_orders|length }} pesanan
+                                </span>
+                                <span class="text-muted" style="font-size: 11px;">Pencarian & pengurutan real-time</span>
+                            </div>
+                        </div>
+
+                        <div id="managerOrdersTableContainer">
+                        {% if manager_pending_orders and manager_pending_orders|length > 0 %}
+                        <div class="table-responsive bg-white rounded border border-dark">
+                            <table class="table table-bordered table-hover align-middle mb-0 small">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID Order</th>
+                                        <th>Klien / Pemesan</th>
+                                        <th>Produk</th>
+                                        <th class="text-center">Jumlah</th>
+                                        <th>Total Nilai</th>
+                                        <th>Target Tanggal</th>
+                                        <th class="text-center" style="min-width: 220px;">Tindakan Manager</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="managerPendingOrdersTbody">
+                                    {% for ord in manager_pending_orders %}
+                                    <tr id="managerOrderRow_{{ ord.order_id }}"
+                                        class="manager-pending-order-row"
+                                        data-order-id="{{ ord.order_id }}"
+                                        data-customer="{{ (ord.customer_name or '') | lower }}"
+                                        data-contact="{{ (ord.contact or '') | lower }}"
+                                        data-product="{{ (ord.product_name or '') | lower }}"
+                                        data-qty="{{ ord.quantity or 0 }}"
+                                        data-total="{{ ord.total_price or 0 }}"
+                                        data-date="{{ ord.target_date or '' }}">
+                                        <td class="fw-bold font-monospace">{{ ord.order_id }}</td>
+                                        <td>
+                                            <div class="fw-bold text-dark">{{ ord.customer_name }}</div>
+                                            <div class="text-muted" style="font-size: 11px;">{{ ord.contact or '-' }}</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary mb-1">{{ ord.product_id }}</span><br>
+                                            <strong class="text-dark">{{ ord.product_name }}</strong>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-light text-dark border border-dark fw-bold">
+                                                {{ "{:,.0f}".format(ord.quantity) }} pcs
+                                            </span>
+                                        </td>
+                                        <td class="fw-bold font-monospace text-success">
+                                            Rp {{ "{:,.0f}".format(ord.total_price) }}
+                                        </td>
+                                        <td class="font-monospace">{{ ord.target_date }}</td>
+                                        <td>
+                                            <div class="d-flex flex-column gap-1">
+                                                <!-- Tombol ACC Order (AJAX - Popup Tidak Tertutup) -->
+                                                <button type="button" class="btn btn-success btn-sm fw-bold w-100" style="border: 2px solid #0f172a;" onclick="managerAccOrderAjax('{{ ord.order_id }}', this)">
+                                                    ACC Order (Ke Supervisi)
+                                                </button>
+
+                                                <!-- Tombol Tolak Order (Collapse) -->
+                                                <button class="btn btn-outline-danger btn-sm fw-bold w-100" type="button" data-bs-toggle="collapse" data-bs-target="#rejectCollapse_{{ ord.order_id }}">
+                                                    Tolak Order...
+                                                </button>
+                                                <div class="collapse mt-1" id="rejectCollapse_{{ ord.order_id }}">
+                                                    <form onsubmit="managerRejectOrderAjax(event, '{{ ord.order_id }}', this)" class="p-2 border border-danger rounded bg-white">
+                                                        <label class="form-label small fw-bold mb-1 text-danger">Alasan Penolakan Manager:</label>
+                                                        <textarea name="rejection_reason" class="form-control form-control-sm mb-2" rows="2" placeholder="Kapasitas penuh / Bahan tidak mencukupi..." required></textarea>
+                                                        <button type="submit" class="btn btn-danger btn-sm fw-bold w-100">Kirim Penolakan</button>
+                                                    </form>
+                                                </div>
+
+                                                <!-- Tombol Lihat Detail A-Z (In-Modal Switch - Popup Tidak Tertutup) -->
+                                                <button type="button" class="btn btn-outline-dark btn-sm fw-bold w-100" onclick="managerShowOrderDetail('{{ ord.order_id }}')">
+                                                    Detail Siklus (A-Z)
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    <tr id="managerPendingEmptySearchRow" class="d-none">
+                                        <td colspan="7" class="text-center py-4 bg-white text-muted">
+                                            <div class="fw-bold text-dark mb-1">Tidak ada pesanan yang sesuai</div>
+                                            <small>Tidak ada data yang cocok dengan kata kunci pencarian Anda. Silakan klik <strong>Reset</strong>.</small>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="p-5 text-center text-muted bg-white rounded border border-dark">
+                            <div class="fw-bold fs-6 text-dark mb-1">Semua Order Telah Diverifikasi</div>
+                            <small>Tidak ada pesanan masuk baru yang menunggu persetujuan (ACC) Manager saat ini.</small>
+                        </div>
+                        {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- VIEW 2: DETAIL SIKLUS PESANAN A-Z (IN-MODAL VIEW) -->
+                    <div id="managerModalDetailView" class="d-none">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <button type="button" class="btn btn-dark btn-sm fw-bold" onclick="managerBackToOrderList()">
+                                &larr; Kembali ke Daftar Persetujuan
+                            </button>
+                            <span id="managerDetailOrderIdBadge" class="badge bg-warning text-dark border border-dark font-monospace fs-6"></span>
+                        </div>
+                        <div id="managerModalDetailContent"></div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top border-dark py-2">
+                    <button type="button" class="btn btn-outline-dark fw-bold btn-sm" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: NOTIFIKASI SHIPPING SELESAI (MANAGER) ================= -->
+    <div class="modal fade" id="managerShippedModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 12px; box-shadow: 6px 6px 0px #0f172a;">
+                <div class="modal-header bg-dark text-white py-3">
+                    <div>
+                        <span class="badge bg-success text-white border border-light fw-bold mb-1">// SHIPPING & PRODUCTION NOTIFICATION</span>
+                        <h5 class="modal-title fw-extrabold mb-0">PRODUKSI SELESAI & PENGIRIMAN (SHIPPING)</h5>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <!-- VIEW 1: DAFTAR SHIPPING -->
+                    <div id="managerShippedListView">
+                        <p class="text-muted small mb-3">
+                            Daftar pesanan konsumen yang telah selesai diproduksi oleh teknisi dan telah dikonfirmasi pengirimannya (shipping) oleh Supervisi Produksi. Klik <strong>"Lihat Detail A-Z"</strong> untuk mengaudit alur riwayat lengkap dari awal order hingga pengiriman.
+                        </p>
+
+                        <!-- SEARCH & SORT TOOLBAR (MANAGER SHIPPED) -->
+                        <div class="p-3 mb-3 bg-white border border-dark rounded" style="box-shadow: 3px 3px 0px #0f172a;">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-7">
+                                    <label class="form-label small fw-bold text-dark mb-1">
+                                        <i class="bi bi-search me-1"></i>Pencarian Pengiriman:
+                                    </label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" id="managerShippedSearchInput" class="form-control border-dark font-monospace" placeholder="Cari ID order, nama klien, kontak, atau produk..." oninput="filterAndSortManagerShippedOrders()">
+                                        <button class="btn btn-outline-dark fw-bold" type="button" onclick="clearManagerShippedSearch()">
+                                            <i class="bi bi-x-circle me-1"></i>Reset
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold text-dark mb-1">
+                                        <i class="bi bi-arrow-down-up me-1"></i>Urutkan Data:
+                                    </label>
+                                    <select id="managerShippedSortSelect" class="form-select form-select-sm border-dark fw-bold" onchange="filterAndSortManagerShippedOrders()">
+                                        <option value="id_desc">ID Order (Terbaru / Z-A)</option>
+                                        <option value="id_asc">ID Order (Terlama / A-Z)</option>
+                                        <option value="total_desc">Total Omzet (Tertinggi)</option>
+                                        <option value="total_asc">Total Omzet (Terendah)</option>
+                                        <option value="qty_desc">Jumlah Qty (Terbanyak)</option>
+                                        <option value="qty_asc">Jumlah Qty (Tersedikit)</option>
+                                        <option value="date_desc">Waktu Kirim (Terbaru)</option>
+                                        <option value="date_asc">Waktu Kirim (Terlama)</option>
+                                        <option value="product_asc">Nama Produk (A-Z)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-light small">
+                                <span id="managerShippedCountBadge" class="badge bg-success text-white font-monospace">
+                                    Menampilkan {{ manager_shipped_orders|length }} data terkirim
+                                </span>
+                                <span class="text-muted" style="font-size: 11px;">Pencarian & pengurutan real-time</span>
+                            </div>
+                        </div>
+
+                        {% if manager_shipped_orders and manager_shipped_orders|length > 0 %}
+                        <div class="table-responsive bg-white rounded border border-dark">
+                            <table class="table table-bordered table-hover align-middle mb-0 small">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID Order</th>
+                                        <th>Klien / Kontak</th>
+                                        <th>Produk & Qty</th>
+                                        <th>Total Omzet</th>
+                                        <th>Waktu Pengiriman</th>
+                                        <th class="text-center">Status</th>
+                                        <th class="text-center" style="min-width: 170px;">Audit & Detail</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="managerShippedOrdersTbody">
+                                    {% for ord in manager_shipped_orders %}
+                                    <tr id="managerShippedRow_{{ ord.order_id }}"
+                                        class="manager-shipped-order-row"
+                                        data-order-id="{{ ord.order_id }}"
+                                        data-customer="{{ (ord.customer_name or '') | lower }}"
+                                        data-contact="{{ (ord.contact or '') | lower }}"
+                                        data-product="{{ (ord.product_name or '') | lower }}"
+                                        data-qty="{{ ord.quantity or 0 }}"
+                                        data-total="{{ ord.total_price or 0 }}"
+                                        data-date="{{ ord.shipped_at or ord.date or '' }}">
+                                        <td class="fw-bold font-monospace">{{ ord.order_id }}</td>
+                                        <td>
+                                            <div class="fw-bold text-dark">{{ ord.customer_name }}</div>
+                                            <div class="text-muted" style="font-size: 11px;">{{ ord.contact or '-' }}</div>
+                                        </td>
+                                        <td>
+                                            <strong class="text-dark">{{ ord.product_name }}</strong><br>
+                                            <span class="badge bg-light text-dark border border-dark">{{ "{:,.0f}".format(ord.quantity) }} pcs</span>
+                                        </td>
+                                        <td class="fw-bold font-monospace text-success">
+                                            Rp {{ "{:,.0f}".format(ord.total_price) }}
+                                        </td>
+                                        <td class="font-monospace">
+                                            <span class="badge bg-light text-dark border border-dark">
+                                                {{ ord.shipped_at or ord.date or '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-dark text-white border border-dark px-2 py-1">SHIPPED</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-primary btn-sm fw-bold w-100" style="border: 2px solid #0f172a;" onclick="managerShippedShowOrderDetail('{{ ord.order_id }}')">
+                                                Lihat Detail A-Z
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    <tr id="managerShippedEmptySearchRow" class="d-none">
+                                        <td colspan="7" class="text-center py-4 bg-white text-muted">
+                                            <div class="fw-bold text-dark mb-1">Tidak ada data pengiriman yang sesuai</div>
+                                            <small>Tidak ada data yang cocok dengan kata kunci pencarian Anda. Silakan klik <strong>Reset</strong>.</small>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="p-5 text-center text-muted bg-white rounded border border-dark">
+                            <div class="fw-bold fs-6 text-dark">Belum Ada Pengiriman Selesai</div>
+                            <small>Pesanan yang telah rampung diproduksi dan dikirim oleh supervisi akan muncul di sini secara otomatis.</small>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- VIEW 2: DETAIL SIKLUS PESANAN A-Z (IN-MODAL VIEW) -->
+                    <div id="managerShippedDetailView" class="d-none">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <button type="button" class="btn btn-dark btn-sm fw-bold" onclick="managerShippedBackToList()">
+                                &larr; Kembali ke Daftar Pengiriman
+                            </button>
+                            <span id="managerShippedDetailOrderIdBadge" class="badge bg-success text-white border border-dark font-monospace fs-6"></span>
+                        </div>
+                        <div id="managerShippedDetailContent"></div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top border-dark py-2">
+                    <button type="button" class="btn btn-outline-dark fw-bold btn-sm" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ================= MODAL GLOBAL: DETAIL SIKLUS PESANAN LENGKAP (A-Z) ================= -->
+    <div class="modal fade" id="orderDetailAtoZModal" tabindex="-1" style="z-index: 1090;">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 12px; box-shadow: 6px 6px 0px #0f172a;">
+                <div class="modal-header bg-dark text-white py-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-warning text-dark border border-dark fw-bold">// END-TO-END AUDIT TRAIL</span>
+                        <h5 class="modal-title fw-extrabold mb-0" id="atozModalTitle">DETAIL SIKLUS PESANAN (AWAL HINGGA SELESAI)</h5>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-light" id="atozModalBody">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary mb-2" role="status"></div>
+                        <div class="fw-bold small text-muted">Memuat data audit trail siklus pesanan...</div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top border-dark py-2 d-flex justify-content-between">
+                    <span class="small text-muted font-monospace">DMP Store Industrial Manufacturing ERP &copy; Realtime Traceability</span>
+                    <button type="button" class="btn btn-outline-dark fw-bold btn-sm px-4" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+    <script>
+        const lenis = new Lenis({
+            duration: 1.15,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            smoothWheel: true,
+            prevent: (node) => {
+                return Boolean(node && (
+                    (typeof node.closest === "function" && (node.closest(".modal") || node.closest(".chat-box") || node.closest(".table-responsive"))) ||
+                    (node.classList && (node.classList.contains("modal") || node.classList.contains("modal-body") || node.classList.contains("modal-dialog") || node.classList.contains("modal-content")))
+                ));
+            }
+        });
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // Hentikan penangkapan wheel & touchmove oleh Lenis di dalam setiap modal agar scroll native berjalan mulus
+        ['wheel', 'touchmove'].forEach(eventType => {
+            document.addEventListener(eventType, (e) => {
+                if (e.target.closest && e.target.closest('.modal')) {
+                    e.stopPropagation();
+                }
+            }, { passive: true });
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            function markLenisPrevent() {
+                document.querySelectorAll(".modal, .modal-dialog, .modal-content, .modal-body, .chat-box, .table-responsive").forEach(el => {
+                    el.setAttribute("data-lenis-prevent", "true");
+                    el.setAttribute("data-lenis-prevent-wheel", "true");
+                    el.setAttribute("data-lenis-prevent-touch", "true");
+                });
+            }
+            markLenisPrevent();
+
+            document.addEventListener("show.bs.modal", (e) => {
+                const modalEl = e.target;
+                if (modalEl && modalEl.parentNode !== document.body) {
+                    document.body.appendChild(modalEl);
+                }
+                lenis.stop();
+                document.documentElement.classList.add("lenis-stopped");
+                if (modalEl) {
+                    modalEl.setAttribute("data-lenis-prevent", "true");
+                    modalEl.querySelectorAll("*").forEach(child => {
+                        child.setAttribute("data-lenis-prevent", "true");
+                    });
+                }
+            });
+
+            document.addEventListener("hidden.bs.modal", () => {
+                if (!document.querySelector(".modal.show")) {
+                    lenis.start();
+                    document.documentElement.classList.remove("lenis-stopped");
+                }
+            });
+
+            document.body.classList.add("page-loaded");
+
+            // Hanya berikan efek reveal pada elemen yang tidak menyimpan modal di dalamnya
+            const autoTargets = document.querySelectorAll("#heroSection, #koleksiSection > div, #katalogSection .col-sm-6, #keunggulanSection .col-md-3");
+            autoTargets.forEach((el, index) => {
+                el.classList.add("reveal-item");
+                el.style.transitionDelay = `${(index % 4) * 75}ms`;
+            });
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("is-visible");
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.12 });
+
+            document.querySelectorAll(".reveal-item").forEach(el => observer.observe(el));
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const targetId = this.getAttribute('href');
+                if (targetId && targetId !== '#') {
+                    const targetEl = document.querySelector(targetId);
+                    if (targetEl) {
+                        e.preventDefault();
+                        lenis.scrollTo(targetEl, { offset: -80 });
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll('a[href]:not([href^="#"]):not([target="_blank"]):not([data-bs-toggle])').forEach(link => {
+            link.addEventListener("click", function (e) {
+                const href = this.getAttribute("href");
+                if (href && !href.startsWith("mailto:") && !href.startsWith("javascript:")) {
+                    e.preventDefault();
+                    document.body.classList.remove("page-loaded");
+                    document.body.classList.add("page-exiting");
+                    setTimeout(() => {
+                        window.location.href = href;
+                    }, 250);
+                }
+            });
+        });
+
+        // Global Material Detail Function (Accessible across all roles)
+        function openMaterialDetailModal(materialId) {
+            if (!materialId) return;
+            
+            const title = document.getElementById("matDetailTitle");
+            if (title) title.textContent = "Memuat data bahan baku " + materialId + "...";
+            
+            const modalEl = document.getElementById("materialDetailModal");
+            if (!modalEl) return;
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+
+            fetch("/api/material/detail/" + encodeURIComponent(materialId))
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === "success" && data.material) {
+                        const m = data.material;
+                        if (title) title.textContent = `${m.material_id} - ${m.name}`;
+                        
+                        const ts = document.getElementById("matDetailTimestamp");
+                        if (ts) ts.textContent = m.realtime_datetime || "";
+
+                        const stockEl = document.getElementById("matDetailStock");
+                        if (stockEl) stockEl.textContent = Number(m.stock_kg || 0).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 2}) + " kg";
+
+                        const inUseEl = document.getElementById("matDetailInUse");
+                        if (inUseEl) inUseEl.textContent = Number(m.in_use_kg || 0).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 2}) + " kg";
+
+                        const schedEl = document.getElementById("matDetailScheduled");
+                        if (schedEl) schedEl.textContent = Number(m.scheduled_kg || 0).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 2}) + " kg";
+
+                        const pendEl = document.getElementById("matDetailPending");
+                        if (pendEl) pendEl.textContent = Number(m.pending_orders_kg || 0).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 2}) + " kg";
+
+                        const netEl = document.getElementById("matDetailNetAvailable");
+                        if (netEl) {
+                            const netVal = m.net_available_kg || 0;
+                            netEl.textContent = Number(netVal).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 2}) + " kg";
+                            netEl.className = "fs-5 fw-extrabold " + (netVal < (m.min_threshold || 0) ? "text-danger" : "text-success");
+                        }
+
+                        const thEl = document.getElementById("matDetailThreshold");
+                        if (thEl) thEl.textContent = Number(m.min_threshold || 0).toLocaleString('id-ID') + " kg";
+
+                        // Scheduled table
+                        const schedTbody = document.getElementById("matDetailScheduledTable");
+                        if (schedTbody) {
+                            if (!m.scheduled_orders || m.scheduled_orders.length === 0) {
+                                schedTbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-2">Tidak ada order yang sedang terjadwal/di-acc.</td></tr>';
+                            } else {
+                                let h = "";
+                                m.scheduled_orders.forEach(s => {
+                                    h += `
+                                        <tr>
+                                            <td class="font-monospace fw-bold">${s.wo_id || s.order_id}</td>
+                                            <td>${s.product_name}</td>
+                                            <td class="text-center font-monospace">${Number(s.quantity).toLocaleString('id-ID')} pcs</td>
+                                            <td class="text-end fw-bold text-primary font-monospace">${Number(s.allocated_kg).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 2})} kg</td>
+                                            <td class="font-monospace">${s.target_date || '-'}</td>
+                                        </tr>
+                                    `;
+                                });
+                                schedTbody.innerHTML = h;
+                            }
+                        }
+
+                        // Pending table
+                        const pendTbody = document.getElementById("matDetailPendingTable");
+                        if (pendTbody) {
+                            if (!m.pending_orders || m.pending_orders.length === 0) {
+                                pendTbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-2">Tidak ada order pending yang menunggu acc.</td></tr>';
+                            } else {
+                                let h = "";
+                                m.pending_orders.forEach(p => {
+                                    h += `
+                                        <tr>
+                                            <td class="font-monospace fw-bold">${p.order_id}</td>
+                                            <td>${p.customer_name || '-'}</td>
+                                            <td>${p.product_name}</td>
+                                            <td class="text-center font-monospace">${Number(p.quantity).toLocaleString('id-ID')} pcs</td>
+                                            <td class="text-end fw-bold text-danger font-monospace">${Number(p.needed_kg).toLocaleString('id-ID', {minimumFractionDigits: 1, maximumFractionDigits: 2})} kg</td>
+                                            <td class="font-monospace">${p.order_date || '-'}</td>
+                                        </tr>
+                                    `;
+                                });
+                                pendTbody.innerHTML = h;
+                            }
+                        }
+                    } else {
+                        alert("Gagal memuat detail bahan baku.");
+                    }
+                })
+                .catch(err => {
+                    console.error("Fetch material detail error:", err);
+                    alert("Terjadi kesalahan jaringan saat memuat detail bahan baku.");
+                });
+        }
+
+        // Helper Render Detail Siklus Order A-Z (Bebas Emoticon)
+        function renderOrderAuditTrailHtml(o, targetEl) {
+            let stepsHtml = "";
+
+            (o.steps || []).forEach((st) => {
+                let detailsList = "";
+                for (const [k, v] of Object.entries(st.details || {})) {
+                    detailsList += `
+                        <div class="d-flex justify-content-between py-1 border-bottom border-light">
+                            <span class="text-muted">${k}:</span>
+                            <strong class="text-dark font-monospace text-end">${v}</strong>
+                        </div>
+                    `;
+                }
+
+                const badgeColor = st.badge_color || "secondary";
+
+                stepsHtml += `
+                    <div class="card p-3 mb-3 border-2 border-dark" style="box-shadow: 3px 3px 0px #0f172a;">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 border-bottom pb-2 mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-dark text-white rounded-circle fs-6" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">
+                                    ${st.step_no || st.step}
+                                </span>
+                                <div>
+                                    <h6 class="fw-extrabold mb-0 text-dark">${st.title}</h6>
+                                    <small class="text-muted">${st.subtitle || ''}</small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-${badgeColor} text-white border border-dark px-2 py-1">${st.badge}</span>
+                                <div class="small text-muted font-monospace mt-1" style="font-size: 11px;">${st.timestamp || '-'}</div>
+                            </div>
+                        </div>
+                        <div class="bg-light p-2 rounded small">
+                            ${detailsList}
+                        </div>
+                    </div>
+                `;
+            });
+
+            targetEl.innerHTML = `
+                <!-- Ringkasan Finansial & Produk -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card p-3 h-100 bg-white border-2 border-dark">
+                            <span class="small text-muted fw-bold">TOTAL TAGIHAN ORDER</span>
+                            <div class="fs-5 fw-extrabold text-success font-monospace">Rp ${Number(o.total_price || 0).toLocaleString('id-ID')}</div>
+                            <small class="text-muted">${Number(o.quantity || 0).toLocaleString('id-ID')} pcs &bull; ${o.product_name}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card p-3 h-100 bg-white border-2 border-dark">
+                            <span class="small text-muted fw-bold">ESTIMASI BIAYA HPP</span>
+                            <div class="fs-5 fw-extrabold text-danger font-monospace">Rp ${Number(o.production_cost || 0).toLocaleString('id-ID')}</div>
+                            <small class="text-muted">Bahan Baku + Operasional</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card p-3 h-100 bg-white border-2 border-dark">
+                            <span class="small text-muted fw-bold">MARGIN LABA BERSIH</span>
+                            <div class="fs-5 fw-extrabold text-primary font-monospace">Rp ${Number(o.net_profit || 0).toLocaleString('id-ID')}</div>
+                            <small class="text-success fw-bold">${o.margin_percentage}% Margin Keuntungan</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card p-3 h-100 bg-white border-2 border-dark">
+                            <span class="small text-muted fw-bold">STATUS SIKLUS SAAT INI</span>
+                            <div class="fs-6 fw-extrabold text-dark mt-1">
+                                <span class="badge bg-warning text-dark border border-dark text-uppercase">${o.status}</span>
+                            </div>
+                            <small class="text-muted">Target: ${o.target_date || '-'}</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5 Tahapan Siklus A-Z Timeline -->
+                <div class="mb-2">
+                    <h6 class="fw-extrabold text-uppercase text-dark mb-3">// KRONOLOGI ALUR SIKLUS PESANAN (A TO Z)</h6>
+                    ${stepsHtml}
+                </div>
+            `;
+        }
+
+        // ================= SEARCH & SORT FOR MANAGER PENDING ORDERS =================
+        function filterAndSortManagerPendingOrders() {
+            const searchInput = document.getElementById("managerPendingSearchInput");
+            const sortSelect = document.getElementById("managerPendingSortSelect");
+            const tbody = document.getElementById("managerPendingOrdersTbody");
+            const countBadge = document.getElementById("managerPendingCountBadge");
+            const emptyRow = document.getElementById("managerPendingEmptySearchRow");
+            if (!tbody) return;
+
+            const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
+            const sortKey = sortSelect ? sortSelect.value : "id_desc";
+            const rows = Array.from(tbody.querySelectorAll("tr.manager-pending-order-row"));
+
+            let visibleCount = 0;
+            rows.forEach(row => {
+                const searchData = [
+                    row.dataset.orderId || "",
+                    row.dataset.customer || "",
+                    row.dataset.contact || "",
+                    row.dataset.product || "",
+                    row.dataset.total || "",
+                    row.dataset.date || ""
+                ].join(" ").toLowerCase();
+
+                if (!query || searchData.includes(query)) {
+                    row.style.display = "";
+                    visibleCount++;
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            rows.sort((a, b) => {
+                if (sortKey === "id_desc") return (b.dataset.orderId || "").localeCompare(a.dataset.orderId || "");
+                if (sortKey === "id_asc") return (a.dataset.orderId || "").localeCompare(b.dataset.orderId || "");
+                if (sortKey === "total_desc") return (parseFloat(b.dataset.total) || 0) - (parseFloat(a.dataset.total) || 0);
+                if (sortKey === "total_asc") return (parseFloat(a.dataset.total) || 0) - (parseFloat(b.dataset.total) || 0);
+                if (sortKey === "qty_desc") return (parseFloat(b.dataset.qty) || 0) - (parseFloat(a.dataset.qty) || 0);
+                if (sortKey === "qty_asc") return (parseFloat(a.dataset.qty) || 0) - (parseFloat(b.dataset.qty) || 0);
+                if (sortKey === "date_asc") return (a.dataset.date || "").localeCompare(b.dataset.date || "");
+                if (sortKey === "date_desc") return (b.dataset.date || "").localeCompare(a.dataset.date || "");
+                if (sortKey === "product_asc") return (a.dataset.product || "").localeCompare(b.dataset.product || "");
+                return 0;
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+            if (emptyRow) {
+                tbody.appendChild(emptyRow);
+                if (visibleCount === 0 && rows.length > 0) {
+                    emptyRow.classList.remove("d-none");
+                } else {
+                    emptyRow.classList.add("d-none");
+                }
+            }
+
+            if (countBadge) {
+                countBadge.textContent = `Menampilkan ${visibleCount} dari ${rows.length} pesanan`;
+            }
+        }
+
+        function clearManagerPendingSearch() {
+            const input = document.getElementById("managerPendingSearchInput");
+            if (input) input.value = "";
+            filterAndSortManagerPendingOrders();
+        }
+
+        // ================= SEARCH & SORT FOR MANAGER SHIPPED ORDERS =================
+        function filterAndSortManagerShippedOrders() {
+            const searchInput = document.getElementById("managerShippedSearchInput");
+            const sortSelect = document.getElementById("managerShippedSortSelect");
+            const tbody = document.getElementById("managerShippedOrdersTbody");
+            const countBadge = document.getElementById("managerShippedCountBadge");
+            const emptyRow = document.getElementById("managerShippedEmptySearchRow");
+            if (!tbody) return;
+
+            const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
+            const sortKey = sortSelect ? sortSelect.value : "id_desc";
+            const rows = Array.from(tbody.querySelectorAll("tr.manager-shipped-order-row"));
+
+            let visibleCount = 0;
+            rows.forEach(row => {
+                const searchData = [
+                    row.dataset.orderId || "",
+                    row.dataset.customer || "",
+                    row.dataset.contact || "",
+                    row.dataset.product || "",
+                    row.dataset.total || "",
+                    row.dataset.date || ""
+                ].join(" ").toLowerCase();
+
+                if (!query || searchData.includes(query)) {
+                    row.style.display = "";
+                    visibleCount++;
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            rows.sort((a, b) => {
+                if (sortKey === "id_desc") return (b.dataset.orderId || "").localeCompare(a.dataset.orderId || "");
+                if (sortKey === "id_asc") return (a.dataset.orderId || "").localeCompare(b.dataset.orderId || "");
+                if (sortKey === "total_desc") return (parseFloat(b.dataset.total) || 0) - (parseFloat(a.dataset.total) || 0);
+                if (sortKey === "total_asc") return (parseFloat(a.dataset.total) || 0) - (parseFloat(b.dataset.total) || 0);
+                if (sortKey === "qty_desc") return (parseFloat(b.dataset.qty) || 0) - (parseFloat(a.dataset.qty) || 0);
+                if (sortKey === "qty_asc") return (parseFloat(a.dataset.qty) || 0) - (parseFloat(b.dataset.qty) || 0);
+                if (sortKey === "date_desc") return (b.dataset.date || "").localeCompare(a.dataset.date || "");
+                if (sortKey === "date_asc") return (a.dataset.date || "").localeCompare(b.dataset.date || "");
+                if (sortKey === "product_asc") return (a.dataset.product || "").localeCompare(b.dataset.product || "");
+                return 0;
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+            if (emptyRow) {
+                tbody.appendChild(emptyRow);
+                if (visibleCount === 0 && rows.length > 0) {
+                    emptyRow.classList.remove("d-none");
+                } else {
+                    emptyRow.classList.add("d-none");
+                }
+            }
+
+            if (countBadge) {
+                countBadge.textContent = `Menampilkan ${visibleCount} dari ${rows.length} data`;
+            }
+        }
+
+        function clearManagerShippedSearch() {
+            const input = document.getElementById("managerShippedSearchInput");
+            if (input) input.value = "";
+            filterAndSortManagerShippedOrders();
+        }
+
+        // ================= FILTER REAL-TIME MATERIAL DETAIL TABLES =================
+        function filterMaterialDetailTables() {
+            const input = document.getElementById("matDetailFilterInput");
+            if (!input) return;
+            const query = input.value.trim().toLowerCase();
+            ["matDetailScheduledTable", "matDetailPendingTable"].forEach(tbodyId => {
+                const tbody = document.getElementById(tbodyId);
+                if (!tbody) return;
+                const rows = tbody.querySelectorAll("tr");
+                rows.forEach(r => {
+                    if (r.children.length <= 1) return; // skip empty text rows
+                    const text = r.textContent.toLowerCase();
+                    if (!query || text.includes(query)) {
+                        r.style.display = "";
+                    } else {
+                        r.style.display = "none";
+                    }
+                });
+            });
+        }
+
+        // AJAX ACC Order (Popup Tetap Terbuka)
+        function managerAccOrderAjax(orderId, btnEl) {
+            const originalHtml = btnEl.innerHTML;
+            btnEl.disabled = true;
+            btnEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Menyimpan...';
+
+            fetch('/manager/approve_order/' + encodeURIComponent(orderId), {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const alertBox = document.getElementById("managerModalAlertBox");
+                    if (alertBox) {
+                        alertBox.className = "alert alert-success border border-dark small mb-3 py-2";
+                        alertBox.innerHTML = "<strong>Berhasil:</strong> Order " + orderId + " telah di-ACC dan diteruskan ke Supervisi untuk penjadwalan produksi.";
+                        alertBox.classList.remove("d-none");
+                    }
+                    
+                    const rowEl = document.getElementById("managerOrderRow_" + orderId);
+                    if (rowEl) {
+                        rowEl.style.transition = "all 0.35s ease";
+                        rowEl.style.backgroundColor = "#dcfce7";
+                        setTimeout(() => {
+                            rowEl.remove();
+                            const tbody = document.getElementById("managerPendingOrdersTbody");
+                            if (tbody && tbody.children.length === 0) {
+                                document.getElementById("managerOrdersTableContainer").innerHTML = `
+                                    <div class="p-5 text-center text-muted bg-white rounded border border-dark">
+                                        <div class="fw-bold fs-6 text-dark mb-1">Semua Order Telah Diverifikasi</div>
+                                        <small>Tidak ada pesanan masuk baru yang menunggu persetujuan (ACC) Manager saat ini.</small>
+                                    </div>
+                                `;
+                            }
+                        }, 350);
+                    }
+
+                    const badgeEl = document.getElementById("managerPendingAccBadge");
+                    if (badgeEl) {
+                        const rem = data.remaining_pending;
+                        if (rem && rem > 0) {
+                            badgeEl.textContent = rem;
+                            badgeEl.classList.remove("d-none");
+                        } else {
+                            badgeEl.classList.add("d-none");
+                        }
+                    }
+                } else {
+                    alert(data.message || "Gagal menyetujui order.");
+                    btnEl.disabled = false;
+                    btnEl.innerHTML = originalHtml;
+                }
+            })
+            .catch(err => {
+                console.error("ACC order error:", err);
+                alert("Terjadi kesalahan jaringan.");
+                btnEl.disabled = false;
+                btnEl.innerHTML = originalHtml;
+            });
+        }
+
+        // AJAX Tolak Order (Popup Tetap Terbuka)
+        function managerRejectOrderAjax(event, orderId, formEl) {
+            event.preventDefault();
+            const submitBtn = formEl.querySelector('button[type="submit"]');
+            const reasonInput = formEl.querySelector('textarea[name="rejection_reason"]');
+            const reason = reasonInput ? reasonInput.value.trim() : "";
+            if (!reason) {
+                alert("Silakan masukkan alasan penolakan.");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Mengirim...';
+
+            fetch('/manager/reject_order/' + encodeURIComponent(orderId), {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({ rejection_reason: reason })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const alertBox = document.getElementById("managerModalAlertBox");
+                    if (alertBox) {
+                        alertBox.className = "alert alert-warning border border-dark small mb-3 py-2";
+                        alertBox.innerHTML = "<strong>Order Ditolak:</strong> Order " + orderId + " telah ditolak dan klien telah diberi notifikasi.";
+                        alertBox.classList.remove("d-none");
+                    }
+                    const rowEl = document.getElementById("managerOrderRow_" + orderId);
+                    if (rowEl) {
+                        rowEl.style.transition = "all 0.35s ease";
+                        rowEl.style.backgroundColor = "#fee2e2";
+                        setTimeout(() => {
+                            rowEl.remove();
+                            const tbody = document.getElementById("managerPendingOrdersTbody");
+                            if (tbody && tbody.children.length === 0) {
+                                document.getElementById("managerOrdersTableContainer").innerHTML = `
+                                    <div class="p-5 text-center text-muted bg-white rounded border border-dark">
+                                        <div class="fw-bold fs-6 text-dark mb-1">Semua Order Telah Diverifikasi</div>
+                                        <small>Tidak ada pesanan masuk baru yang menunggu persetujuan (ACC) Manager saat ini.</small>
+                                    </div>
+                                `;
+                            }
+                        }, 350);
+                    }
+                    const badgeEl = document.getElementById("managerPendingAccBadge");
+                    if (badgeEl) {
+                        const rem = data.remaining_pending;
+                        if (rem && rem > 0) {
+                            badgeEl.textContent = rem;
+                            badgeEl.classList.remove("d-none");
+                        } else {
+                            badgeEl.classList.add("d-none");
+                        }
+                    }
+                } else {
+                    alert(data.message || "Gagal menolak order.");
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = "Kirim Penolakan";
+                }
+            })
+            .catch(err => {
+                console.error("Reject order error:", err);
+                alert("Terjadi kesalahan jaringan.");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = "Kirim Penolakan";
+            });
+        }
+
+        // Tampilkan Detail Order A-Z Langsung di Dalam Modal Manager ACC (Tanpa Tutup Modal)
+        function managerShowOrderDetail(orderId) {
+            document.getElementById("managerModalListView").classList.add("d-none");
+            const detailView = document.getElementById("managerModalDetailView");
+            detailView.classList.remove("d-none");
+
+            const badgeEl = document.getElementById("managerDetailOrderIdBadge");
+            if (badgeEl) badgeEl.textContent = orderId;
+            
+            const contentEl = document.getElementById("managerModalDetailContent");
+            contentEl.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary mb-2" role="status"></div>
+                    <div class="fw-bold small text-muted">Memuat data siklus pesanan ${orderId} dari database...</div>
+                </div>
+            `;
+
+            fetch('/api/order/detail_atoz/' + encodeURIComponent(orderId))
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success' && data.order) {
+                        renderOrderAuditTrailHtml(data.order, contentEl);
+                    } else {
+                        contentEl.innerHTML = '<div class="alert alert-danger border border-dark p-3">Gagal memuat rincian pesanan.</div>';
+                    }
+                })
+                .catch(err => {
+                    console.error("Fetch detail error:", err);
+                    contentEl.innerHTML = '<div class="alert alert-danger border border-dark p-3">Terjadi kesalahan jaringan saat memuat detail pesanan.</div>';
+                });
+        }
+
+        function managerBackToOrderList() {
+            document.getElementById("managerModalDetailView").classList.add("d-none");
+            document.getElementById("managerModalListView").classList.remove("d-none");
+        }
+
+        // Tampilkan Detail Order A-Z Langsung di Dalam Modal Manager Shipped (Tanpa Tutup Modal)
+        function managerShippedShowOrderDetail(orderId) {
+            document.getElementById("managerShippedListView").classList.add("d-none");
+            const detailView = document.getElementById("managerShippedDetailView");
+            detailView.classList.remove("d-none");
+
+            const badgeEl = document.getElementById("managerShippedDetailOrderIdBadge");
+            if (badgeEl) badgeEl.textContent = orderId;
+
+            const contentEl = document.getElementById("managerShippedDetailContent");
+            contentEl.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary mb-2" role="status"></div>
+                    <div class="fw-bold small text-muted">Memuat data siklus pengiriman ${orderId}...</div>
+                </div>
+            `;
+
+            fetch('/api/order/detail_atoz/' + encodeURIComponent(orderId))
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success' && data.order) {
+                        renderOrderAuditTrailHtml(data.order, contentEl);
+                    } else {
+                        contentEl.innerHTML = '<div class="alert alert-danger border border-dark p-3">Gagal memuat rincian pengiriman.</div>';
+                    }
+                })
+                .catch(err => {
+                    console.error("Fetch detail error:", err);
+                    contentEl.innerHTML = '<div class="alert alert-danger border border-dark p-3">Terjadi kesalahan jaringan saat memuat detail pengiriman.</div>';
+                });
+        }
+
+        function managerShippedBackToList() {
+            document.getElementById("managerShippedDetailView").classList.add("d-none");
+            document.getElementById("managerShippedListView").classList.remove("d-none");
+        }
+
+        // Global Order Detail A to Z Function (Untuk Supervisi & Halaman Lain)
+        function openOrderDetailAtoZModal(orderId) {
+            if (!orderId) return;
+
+            const modalEl = document.getElementById("orderDetailAtoZModal");
+            if (!modalEl) return;
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+
+            const titleEl = document.getElementById("atozModalTitle");
+            const bodyEl = document.getElementById("atozModalBody");
+            if (titleEl) titleEl.textContent = `AUDIT TRAIL SIKLUS PESANAN: ${orderId}`;
+            if (bodyEl) {
+                bodyEl.innerHTML = `
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary mb-2" role="status"></div>
+                        <div class="fw-bold small text-muted">Memuat data siklus pesanan ${orderId} dari database...</div>
+                    </div>
+                `;
+            }
+
+            fetch(`/api/order/detail_atoz/${encodeURIComponent(orderId)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === "success" && data.order) {
+                        renderOrderAuditTrailHtml(data.order, bodyEl);
+                    } else {
+                        bodyEl.innerHTML = `
+                            <div class="alert alert-danger border border-dark p-4 text-center">
+                                <strong>Gagal memuat rincian pesanan.</strong><br>
+                                ${data.message || 'Data tidak ditemukan di database.'}
+                            </div>
+                        `;
+                    }
+                })
+                .catch(err => {
+                    console.error("Fetch order detail error:", err);
+                    bodyEl.innerHTML = `
+                        <div class="alert alert-danger border border-dark p-4 text-center">
+                            <strong>Terjadi kesalahan jaringan atau server saat memuat detail pesanan.</strong>
+                        </div>
+                    `;
+                });
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

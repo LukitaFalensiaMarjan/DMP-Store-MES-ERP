@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block navbar_center %}
+<div class="d-flex align-items-center">
+    <a href="{{ url_for('supervisi_orders') }}" class="nav-link-custom">Verifikasi Order</a>
+    <a href="{{ url_for('supervisi_inventory') }}" class="nav-link-custom">Stok & Bahan Baku</a>
+    <a href="{{ url_for('supervisi_machines') }}" class="nav-link-custom" style="color: #ff6f3c;">Mesin & Jadwal WO</a>
+</div>
+{% endblock %}
+
+{% block navbar_icons %}
+<!-- Tombol Chat Supervisi dengan Notifikasi Jumlah Orang yg Chat -->
+<a href="{{ url_for('supervisi_chat_room', username='all') }}" class="icon-btn-nav position-relative" title="Live Chat User ({{ chat_people_count }} Klien)">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 9h8a4 4 0 0 1 4 4v2a4 4 0 0 1-4 4h-5l-4 3v-3H6a4 4 0 0 1-4-4v-2a4 4 0 0 1 4-4z"/>
+        <path d="M10 9V6a3 3 0 0 1 3-3h5l3-2v2h1a3 3 0 0 1 3 3v3a3 3 0 0 1-3 3h-2"/>
+        <circle cx="8" cy="14" r="1" fill="currentColor"/>
+        <circle cx="11" cy="14" r="1" fill="currentColor"/>
+        <circle cx="14" cy="14" r="1" fill="currentColor"/>
+    </svg>
+    {% if chat_people_count and chat_people_count > 0 %}
+    <span class="icon-badge">{{ chat_people_count }}</span>
+    {% endif %}
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 mb-4 text-white" style="background-color: #0f172a; border: 3px solid #0f172a; box-shadow: 6px 6px 0px #ff6f3c; border-radius: 10px;">
+    <span class="badge bg-warning text-dark border border-dark fw-bold mb-2">// ASSET & MES MONITORING</span>
+    <h3 class="fw-extrabold mb-1">Kondisi Aset Mesin & Penugasan Work Order Teknisi</h3>
+    <p class="small text-light opacity-75 mb-0">Pantau kesehatan lini produksi serta hasil laporan OEE dari Teknisi.</p>
+</div>
+
+<div class="row g-4 mb-4">
+    {% for m in machines %}
+    <div class="col-md-4">
+        <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge bg-dark font-monospace">{{ m.machine_id }}</span>
+                <span class="badge {% if m.status == 'Available' %}bg-success{% elif m.status == 'Assigned' %}bg-primary{% else %}bg-warning text-dark{% endif %} border border-dark">
+                    {{ m.status | upper }}
+                </span>
+            </div>
+            <h5 class="fw-extrabold mb-1">{{ m.name }}</h5>
+            <p class="text-muted small mb-3">Tipe Lini: {{ m.type }}</p>
+
+            <div class="mb-3">
+                <div class="d-flex justify-content-between small fw-bold mb-1">
+                    <span>Health Score (Kesehatan)</span>
+                    <span class="{% if m.health_score < 70 %}text-danger fw-extrabold{% elif m.health_score < 80 %}text-warning fw-bold{% else %}text-success fw-bold{% endif %}">{{ m.health_score }}%</span>
+                </div>
+                <div class="progress border border-dark" style="height: 12px;">
+                    <div class="progress-bar {% if m.health_score > 80 %}bg-success{% elif m.health_score >= 70 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ m.health_score }}%;"></div>
+                </div>
+                {% if m.health_score < 70 %}
+                <div class="mt-2 p-1 px-2 bg-danger bg-opacity-10 border border-danger rounded text-danger small fw-bold">
+                    <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> AUS BERAT ({{ m.health_score }}%): Butuh Maintenance Segera! Dikunci dari Penugasan Baru.
+                </div>
+                {% elif m.health_score < 80 %}
+                <div class="mt-2 p-1 px-2 bg-warning bg-opacity-10 border border-warning rounded text-dark small fw-semibold">
+                    <i class="bi bi-exclamation-triangle text-warning me-1"></i> AUS SEDANG: Beban produksi tinggi, jadwalkan servis teknisi.
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Jam Terbang & Beban Produksi Kumulatif -->
+            <div class="mb-2 p-2 bg-white border border-dark rounded small">
+                <div class="d-flex justify-content-between text-muted mb-1" style="font-size: 11px;">
+                    <span>Siklus Selesai:</span>
+                    <span class="fw-bold text-dark">{{ m.get('total_completed_wos', 0) }} Work Order</span>
+                </div>
+                <div class="d-flex justify-content-between text-muted mb-1" style="font-size: 11px;">
+                    <span>Total Output:</span>
+                    <span class="fw-bold text-dark">{{ "{:,.0f}".format(m.get('total_units_produced', 0)) }} pcs</span>
+                </div>
+                <div class="d-flex justify-content-between text-muted" style="font-size: 11px;">
+                    <span>Servis Terakhir:</span>
+                    <span class="fw-bold text-dark">{{ m.get('last_maintenance_date', 'Baru') }}</span>
+                </div>
+            </div>
+
+            <div class="p-2 bg-light border border-dark rounded small font-monospace">
+                <div class="fw-bold text-dark mb-1">Pembacaan Sensor Terakhir:</div>
+                <div>Suhu: {{ m.last_sensor.temperature_c }} °C</div>
+                <div>Getaran: {{ m.last_sensor.vibration_mm_s }} mm/s</div>
+                <div>Arus: {{ m.last_sensor.current_amp }} A</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card p-4">
+    <h5 class="fw-extrabold mb-3 border-bottom pb-2">Daftar Penugasan Work Order (WO) ke Teknisi</h5>
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle mb-0 small">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID WO</th>
+                    <th>ID ORDER</th>
+                    <th>PRODUK</th>
+                    <th>JUMLAH TARGET</th>
+                    <th>MESIN</th>
+                    <th>JADWAL</th>
+                    <th>STATUS</th>
+                    <th>HASIL OEE & OUTPUT</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for wo in work_orders %}
+                <tr>
+                    <td class="fw-bold font-monospace">{{ wo.wo_id }}</td>
+                    <td class="font-monospace">{{ wo.order_id }}</td>
+                    <td class="fw-bold">{{ wo.product_name }}</td>
+                    <td class="fw-bold">{{ "{:,.0f}".format(wo.quantity) }} pcs</td>
+                    <td><span class="badge bg-secondary">{{ wo.machine_id }}</span></td>
+                    <td>{{ wo.start_date }} s/d {{ wo.target_date }}</td>
+                    <td>
+                        <span class="badge {% if wo.status == 'Completed' %}bg-success{% else %}bg-warning text-dark{% endif %} border border-dark">
+                            {{ wo.status }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if wo.production_report %}
+                            <strong>OEE: {{ wo.production_report.oee_percentage }}%</strong><br>
+                            <span class="text-success">Baik: {{ wo.production_report.good_qty }}</span> |
+                            <span class="text-danger">Reject: {{ wo.production_report.reject_qty }}</span>
+                        {% else %}
+                            <span class="text-muted">Menunggu laporan teknisi</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">Belum ada Work Order yang dijadwalkan.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block navbar_center %}
+<div class="d-flex align-items-center">
+    <a href="{{ url_for('supervisi_orders') }}" class="nav-link-custom" style="color: #ff6f3c;">Verifikasi Order</a>
+    <a href="{{ url_for('supervisi_inventory') }}" class="nav-link-custom">Stok & Bahan Baku</a>
+    <a href="{{ url_for('supervisi_machines') }}" class="nav-link-custom">Mesin & Jadwal WO</a>
+</div>
+{% endblock %}
+
+{% block navbar_icons %}
+<!-- Tombol Chat Supervisi dengan Notifikasi Jumlah Orang yg Chat -->
+<a href="{{ url_for('supervisi_chat_room', username='all') }}" class="icon-btn-nav position-relative" title="Live Chat User ({{ chat_people_count }} Klien)">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 9h8a4 4 0 0 1 4 4v2a4 4 0 0 1-4 4h-5l-4 3v-3H6a4 4 0 0 1-4-4v-2a4 4 0 0 1 4-4z"/>
+        <path d="M10 9V6a3 3 0 0 1 3-3h5l3-2v2h1a3 3 0 0 1 3 3v3a3 3 0 0 1-3 3h-2"/>
+        <circle cx="8" cy="14" r="1" fill="currentColor"/>
+        <circle cx="11" cy="14" r="1" fill="currentColor"/>
+        <circle cx="14" cy="14" r="1" fill="currentColor"/>
+    </svg>
+    {% if chat_people_count and chat_people_count > 0 %}
+    <span class="icon-badge">{{ chat_people_count }}</span>
+    {% endif %}
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 mb-4 text-white" style="background-color: #0f172a; border: 3px solid #0f172a; box-shadow: 6px 6px 0px #ff6f3c; border-radius: 10px;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center">
+        <div>
+            <span class="badge bg-warning text-dark border border-dark fw-bold mb-2">// MODUL SUPERVISI PRODUKSI</span>
+            <h3 class="fw-extrabold mb-1">Verifikasi Pesanan & Pengiriman (Customer Orders)</h3>
+            <p class="small text-light opacity-75 mb-0">Tinjau rekomendasi AI sebelum menyetujui order menjadi Work Order untuk Teknisi.</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <span class="badge bg-dark border border-warning px-3 py-2 fs-6">Total Order: {{ orders|length }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="card p-4" style="transform: none !important;">
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle mb-0 small">
+            <thead class="table-dark text-uppercase">
+                <tr>
+                    <th>ID Order</th>
+                    <th>Pemesan & Kontak</th>
+                    <th>Nama Produk</th>
+                    <th class="text-center">Jumlah (Qty)</th>
+                    <th>Total Harga</th>
+                    <th>Target User</th>
+                    <th style="min-width: 240px;">Analisis AI Kelayakan</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center" style="min-width: 160px;">Tindakan</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in orders %}
+                <tr>
+                    <td class="fw-extrabold font-monospace text-nowrap">{{ o.order_id }}</td>
+                    <td>
+                        <div class="fw-bold text-dark">{{ o.customer_name }}</div>
+                        <div class="text-muted" style="font-size: 11px;">{{ o.contact }}</div>
+                    </td>
+                    <td class="fw-bold text-dark">
+                        <span class="badge bg-secondary mb-1">{{ o.product_id }}</span><br>
+                        {{ o.product_name }}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-light text-dark border border-dark fs-6 fw-extrabold px-2 py-1">
+                            {{ "{:,.0f}".format(o.quantity) }} pcs
+                        </span>
+                    </td>
+                    <td class="fw-bold text-nowrap">Rp {{ "{:,.0f}".format(o.total_price) }}</td>
+                    <td class="font-monospace fw-semibold text-nowrap">{{ o.target_date }}</td>
+                    <td>
+                        {% set eval = ai_evals[o.order_id] %}
+                        <div class="p-2 rounded bg-light border border-dark">
+                            <span class="badge {% if eval.is_feasible %}bg-success{% else %}bg-danger{% endif %} border border-dark mb-1">
+                                {{ eval.recommendation }} ({{ eval.confidence_score }}%)
+                            </span>
+                            <ul class="mb-0 ps-3 text-dark" style="font-size: 11px;">
+                                {% for r in eval.reasons %}
+                                    <li>{{ r }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        {% if o.status == 'Pending Manager Approval' %}
+                            <span class="badge bg-warning text-dark border border-dark">MENUNGGU ACC MANAGER</span>
+                        {% elif o.status == 'Approved by Manager' %}
+                            <span class="badge bg-primary text-white border border-dark">DI-ACC MANAGER</span>
+                            <div class="small text-muted" style="font-size: 10px;">Siap Dijadwalkan</div>
+                        {% elif o.status == 'Pending' %}
+                            <span class="badge bg-warning text-dark border border-dark">PENDING</span>
+                        {% elif o.status == 'Approved' %}
+                            <span class="badge bg-info text-dark border border-dark">TERJADWAL (WO AKTIF)</span>
+                        {% elif o.status == 'In Production' %}
+                            <span class="badge bg-primary text-white border border-dark">IN PRODUCTION</span>
+                        {% elif o.status == 'Completed' %}
+                            <span class="badge bg-success border border-dark">PRODUKSI SELESAI</span>
+                            <div class="small text-muted" style="font-size: 10px;">Siap Kirim</div>
+                        {% elif o.status == 'Shipped' %}
+                            <span class="badge bg-dark border border-dark">SHIPPED</span>
+                        {% elif 'Rejected' in o.status or 'Cancelled' in o.status %}
+                            <span class="badge bg-danger border border-dark">{{ o.status | upper }}</span>
+                            {% if o.rejection_reason or o.supervisor_note or o.technician_note %}
+                            <div class="mt-1 small" style="font-size: 10px; color: #b91c1c;">
+                                <strong>{{ o.rejected_by or 'Alasan' }}:</strong> {{ o.rejection_reason or o.supervisor_note or o.technician_note }}
+                            </div>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge bg-secondary border border-dark">{{ o.status | upper }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if o.status == 'Approved by Manager' or o.status == 'Pending' %}
+                            <!-- Tombol Hijau untuk Jadwalkan & Buat WO -->
+                            <button type="button" class="btn btn-good btn-sm w-100 mb-1"
+                                    onclick="openApproveModal('{{ o.order_id }}', '{{ o.product_name }}', '{{ o.quantity }}', '{{ o.target_date }}', '{{ o.required_line_type }}')">
+                                Jadwalkan & Buat WO
+                            </button>
+                            <!-- Tombol Merah untuk Tolak Order -->
+                            <button type="button" class="btn btn-bad btn-sm w-100 mb-1"
+                                    onclick="openRejectModal('{{ o.order_id }}', '{{ o.product_name }}')">
+                                Tolak Order
+                            </button>
+                        {% elif o.status == 'Pending Manager Approval' %}
+                            <div class="p-2 rounded bg-light border border-dark small text-muted font-monospace mb-1" style="font-size: 11px;">
+                                Menunggu ACC Manager
+                            </div>
+                        {% elif o.status == 'Completed' %}
+                            <!-- Tombol Hijau untuk Shipping -->
+                            <form method="POST" action="{{ url_for('ship_order', order_id=o.order_id) }}">
+                                <button type="submit" class="btn btn-good btn-sm w-100 mb-1" onclick="return confirm('Kirim pesanan {{ o.order_id }} ke pelanggan dan kirim notifikasi ke Manager?');">
+                                    Kirim (Shipping)
+                                </button>
+                            </form>
+                        {% elif o.status == 'Shipped' %}
+                            <span class="badge bg-success text-white py-1 px-2 border border-dark mb-1">Terkirim</span>
+                        {% else %}
+                            <span class="text-muted small fw-bold d-block mb-1">-</span>
+                        {% endif %}
+                        <button type="button" class="btn btn-outline-dark btn-sm w-100 py-0" style="font-size: 11px;" onclick="openOrderDetailAtoZModal('{{ o.order_id }}')">
+                            Detail A-Z
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">Belum ada pesanan masuk dari konsumen.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL TUNGGAL TERIMA ORDER -->
+<div class="modal fade" id="singleApproveModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 10px;">
+            <form id="formApproveOrder" method="POST" action="">
+                <div class="modal-header text-white" style="background-color: #16a34a; border-bottom: 2px solid #0f172a;">
+                    <h5 class="modal-title fw-bold">TERIMA ORDER & JADWALKAN WORK ORDER</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    <div class="p-3 bg-white border border-dark rounded mb-3 small">
+                        <div>ID Order: <strong id="modalApproveOrderId" class="font-monospace"></strong></div>
+                        <div>Produk: <strong id="modalApproveProduct"></strong></div>
+                        <div>Jumlah Produksi: <strong id="modalApproveQty" class="text-success"></strong> pcs</div>
+                        <div class="mt-1">Lini Mesin yang Diperlukan: <span id="modalApproveLineBadge" class="badge bg-primary text-white border border-dark"></span></div>
+                    </div>
+
+                    <div id="noMachineAlert" class="alert alert-danger border border-dark py-2 px-3 small mb-3 d-none">
+                        <strong>Pemberitahuan: Tidak ada mesin yang siap digunakan!</strong><br>
+                        Seluruh mesin pada lini <span id="noMachineLineName" class="fw-bold"></span> saat ini sedang beroperasi pada pesanan lain atau membutuhkan maintenance. Tunggu hingga teknisi menyelesaikan produksi.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Pilih Mesin Produksi (Khusus Lini Terkait)</label>
+                        <select name="machine_id" id="modalApproveMachineSelect" class="form-select border-dark" required>
+                        </select>
+                        <small class="text-muted" style="font-size: 11px;">Hanya menampilkan mesin dari lini yang sesuai dan sedang berstatus Siap Digunakan.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Tanggal Mulai Produksi</label>
+                        <input type="date" name="start_date" id="modalApproveStartDate" class="form-control border-dark" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Target Tanggal Selesai</label>
+                        <input type="date" name="target_date" id="modalApproveTargetDate" class="form-control border-dark" required>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top border-dark">
+                    <button type="button" class="btn btn-outline-dark fw-bold" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" id="btnSubmitApproveOrder" class="btn btn-good">Simpan & Kirim ke Teknisi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL TUNGGAL TOLAK ORDER -->
+<div class="modal fade" id="singleRejectModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border: 3px solid #0f172a; border-radius: 10px;">
+            <form id="formRejectOrder" method="POST" action="">
+                <div class="modal-header text-white" style="background-color: #dc2626; border-bottom: 2px solid #0f172a;">
+                    <h5 class="modal-title fw-bold">TOLAK PESANAN KONSUMEN</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    <p class="small mb-2">Anda akan menolak pesanan <strong id="modalRejectOrderId"></strong> (<span id="modalRejectProduct"></span>).</p>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold">Catatan / Alasan Penolakan untuk Konsumen</label>
+                        <textarea name="supervisor_note" class="form-control border-dark" rows="3" placeholder="Contoh: Stok bahan baku sedang defisit dan jadwal mesin penuh." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top border-dark">
+                    <button type="button" class="btn btn-outline-dark fw-bold" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-bad">Konfirmasi Tolak Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const allMachinesData = {{ machines | tojson }};
+
+function openApproveModal(orderId, productName, qty, targetDate, reqLine) {
+    document.getElementById("formApproveOrder").action = "/supervisi/approve/" + orderId;
+    document.getElementById("modalApproveOrderId").innerText = orderId;
+    document.getElementById("modalApproveProduct").innerText = productName;
+    document.getElementById("modalApproveQty").innerText = parseInt(qty).toLocaleString();
+    document.getElementById("modalApproveLineBadge").innerText = reqLine;
+    document.getElementById("modalApproveTargetDate").value = targetDate;
+
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("modalApproveStartDate").value = today;
+
+    const select = document.getElementById("modalApproveMachineSelect");
+    select.innerHTML = "";
+
+    // 1. Filter mesin: HANYA mesin dari lini yang sesuai dengan produk yang di-order
+    const filteredMachines = allMachinesData.filter(m => m.type === reqLine);
+
+    let availableCount = 0;
+    filteredMachines.forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m.machine_id;
+        if (m.is_selectable) {
+            opt.textContent = `${m.machine_id} - ${m.name} (Kondisi: ${m.health_score}% | ${m.status_label})`;
+            availableCount++;
+        } else {
+            opt.disabled = true;
+            opt.textContent = `${m.machine_id} - ${m.name} [TIDAK DAPAT DIPILIH: ${m.status_label}]`;
+            opt.style.color = "#94a3b8";
+            opt.style.backgroundColor = "#f1f5f9";
+        }
+        select.appendChild(opt);
+    });
+
+    const alertBox = document.getElementById("noMachineAlert");
+    const submitBtn = document.getElementById("btnSubmitApproveOrder");
+
+    if (availableCount === 0) {
+        alertBox.classList.remove("d-none");
+        document.getElementById("noMachineLineName").innerText = reqLine;
+        submitBtn.disabled = true;
+        submitBtn.classList.add("disabled");
+        const emptyOpt = document.createElement("option");
+        emptyOpt.value = "";
+        emptyOpt.textContent = `-- Tidak ada mesin lini ${reqLine} yang siap --`;
+        emptyOpt.selected = true;
+        select.appendChild(emptyOpt);
+    } else {
+        alertBox.classList.add("d-none");
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("disabled");
+        for (let i = 0; i < select.options.length; i++) {
+            if (!select.options[i].disabled) {
+                select.selectedIndex = i;
+                break;
+            }
+        }
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById("singleApproveModal"));
+    modal.show();
+}
+
+function openRejectModal(orderId, productName) {
+    document.getElementById("formRejectOrder").action = "/supervisi/reject/" + orderId;
+    document.getElementById("modalRejectOrderId").innerText = orderId;
+    document.getElementById("modalRejectProduct").innerText = productName;
+
+    const modal = new bootstrap.Modal(document.getElementById("singleRejectModal"));
+    modal.show();
+}
+</script>
+{% endblock %}

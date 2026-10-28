@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block navbar_center %}
+<div class="d-flex align-items-center">
+    <a href="{{ url_for('supervisi_orders') }}" class="nav-link-custom">Verifikasi Order</a>
+    <a href="{{ url_for('supervisi_inventory') }}" class="nav-link-custom">Stok & Bahan Baku</a>
+    <a href="{{ url_for('supervisi_machines') }}" class="nav-link-custom">Mesin & Jadwal WO</a>
+    <a href="{{ url_for('supervisi_chat_room', username='all') }}" class="nav-link-custom">Live Chat User</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 mb-4 text-white" style="background-color: #0f172a; border: 3px solid #0f172a; box-shadow: 6px 6px 0px #ff6f3c; border-radius: 10px;">
+    <span class="badge bg-warning text-dark border border-dark fw-bold mb-2">// MACHINE LEARNING INTELLIGENCE</span>
+    <h3 class="fw-extrabold mb-1">Rekomendasi AI untuk Supervisi & Teknisi</h3>
+    <p class="small text-light opacity-75 mb-0">Analisis otomatis urutan prioritas perawatan mesin dan prediksi kebutuhan bahan baku berdasarkan histori order.</p>
+</div>
+
+<div class="row g-4">
+    <!-- Rekomendasi Urutan Perawatan Mesin -->
+    <div class="col-lg-6">
+        <div class="card p-4 h-100">
+            <h5 class="fw-extrabold mb-2 border-bottom pb-2"><i class="bi bi-cpu me-2"></i>Prioritas Mesin Perlu Maintenance</h5>
+            <p class="text-muted small mb-3">Diurutkan otomatis oleh AI berdasarkan skor kesehatan terendah dan beban antrean kerja mesin.</p>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle small mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Urutan</th>
+                            <th>Mesin</th>
+                            <th>Health</th>
+                            <th>Beban WO</th>
+                            <th>Status Darurat AI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mp in machine_priorities %}
+                        <tr>
+                            <td class="fw-bold font-monospace text-center">#{{ loop.index }}</td>
+                            <td><strong>{{ mp.name }}</strong></td>
+                            <td>
+                                <span class="badge {% if mp.health_score > 80 %}bg-success{% elif mp.health_score > 60 %}bg-warning text-dark{% else %}bg-danger{% endif %} border border-dark">
+                                    {{ mp.health_score }}%
+                                </span>
+                            </td>
+                            <td class="font-monospace text-center">{{ mp.active_load }} WO</td>
+                            <td>
+                                <span class="badge {% if mp.status_urgency == 'Darurat / Segera' %}bg-danger{% elif mp.status_urgency == 'Perlu Perhatian' %}bg-warning text-dark{% else %}bg-success{% endif %} border border-dark">
+                                    {{ mp.status_urgency }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rekomendasi Prediksi Kebutuhan Bahan Baku -->
+    <div class="col-lg-6">
+        <div class="card p-4 h-100">
+            <h5 class="fw-extrabold mb-2 border-bottom pb-2"><i class="bi bi-graph-up-arrow me-2"></i>Prediksi Kebutuhan Bahan Baku (Tren Order)</h5>
+            <p class="text-muted small mb-3">Analisis AI terhadap tren pesanan konsumen terbaru untuk mengantisipasi kekurangan stok.</p>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle small mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Bahan Baku</th>
+                            <th>Stok Gudang</th>
+                            <th>Prediksi Kebutuhan</th>
+                            <th>Rekomendasi AI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mr in material_recommendations %}
+                        <tr>
+                            <td class="fw-bold">{{ mr.name }}</td>
+                            <td class="font-monospace">{{ "{:,.1f}".format(mr.current_stock) }} kg</td>
+                            <td class="font-monospace text-primary fw-bold">{{ "{:,.1f}".format(mr.predicted_need) }} kg</td>
+                            <td>
+                                <span class="badge {% if 'Sangat' in mr.status %}bg-danger{% elif 'Mendekati' in mr.status %}bg-warning text-dark{% else %}bg-success{% endif %} border border-dark">
+                                    {{ mr.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

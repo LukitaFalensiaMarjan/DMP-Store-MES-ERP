@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block navbar_center %}
+<div class="d-flex align-items-center">
+    <a href="{{ url_for('teknisi_work_orders') }}" class="nav-link-custom">Daftar Work Order</a>
+    <a href="{{ url_for('teknisi_machine_sensors') }}" class="nav-link-custom" style="color: #ff6f3c;">Input Sensor Mesin</a>
+    <a href="{{ url_for('teknisi_maintenance_recommendations') }}" class="nav-link-custom">Rekomendasi AI Mesin</a>
+    <a href="{{ url_for('teknisi_maintenance_requests') }}" class="nav-link-custom">Pengajuan Maintenance</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 mb-4 text-white" style="background-color: #0f172a; border: 3px solid #0f172a; box-shadow: 6px 6px 0px #ff6f3c; border-radius: 10px;">
+    <span class="badge bg-warning text-dark border border-dark fw-bold mb-2">// IoT & SENSOR ANALYTICS</span>
+    <h3 class="fw-extrabold mb-1">Input Kondisi Mesin & Analisis AI Real-Time</h3>
+    <p class="small text-light opacity-75 mb-0">Setiap data sensor yang diinput akan langsung memperbarui status kesehatan mesin dan terintegrasi otomatis ke Supervisi.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card p-4 border-2" style="border-color: #ff6f3c !important;">
+            <h5 class="fw-extrabold mb-3 border-bottom pb-2">Form Input Sensor Manual</h5>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Pilih Mesin / Aset</label>
+                    <select name="machine_id" class="form-select border-dark" required>
+                        {% for m in machines %}
+                        <option value="{{ m.machine_id }}">{{ m.machine_id }} - {{ m.name }} (Skor Saat Ini: {{ m.health_score }}%)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Suhu Mesin (°C)</label>
+                    <input type="number" step="0.1" name="sensor_temp" class="form-control border-dark" value="45.0" required>
+                    <small class="text-muted" style="font-size: 11px;">Batas normal: < 55°C (Kritis > 65°C)</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Getaran Mesin (mm/s)</label>
+                    <input type="number" step="0.1" name="sensor_vibration" class="form-control border-dark" value="2.0" required>
+                    <small class="text-muted" style="font-size: 11px;">Batas normal: < 2.8 mm/s (Kritis > 4.5 mm/s)</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Arus Listrik (Ampere)</label>
+                    <input type="number" step="0.1" name="sensor_current" class="form-control border-dark" value="12.0" required>
+                    <small class="text-muted" style="font-size: 11px;">Batas normal: < 18A (Kritis > 20A)</small>
+                </div>
+                <button type="submit" class="btn btn-edit w-100 py-2">Kirim & Sinkronkan ke Supervisi</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card p-4 h-100">
+            <h5 class="fw-extrabold mb-3 border-bottom pb-2">Hasil Analisis AI & Status Sinkronisasi</h5>
+            {% if analysis_result %}
+                <div class="p-3 bg-light border border-dark rounded mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold">Mesin Terpilih:</span>
+                        <span class="badge bg-dark font-monospace">{{ selected_machine.machine_id }} - {{ selected_machine.name }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="fw-bold">Skor Kesehatan Baru:</span>
+                        <span class="badge {% if analysis_result.calculated_health > 80 %}bg-success{% elif analysis_result.calculated_health > 60 %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6 border border-dark">
+                            {{ analysis_result.calculated_health }}%
+                        </span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="fw-bold">Status Pemeliharaan:</span>
+                        <span class="badge {% if analysis_result.need_maintenance %}bg-danger{% else %}bg-success{% endif %} border border-dark">
+                            {% if analysis_result.need_maintenance %}Perlu Segera Di-maintenance{% else %}Normal / Prima{% endif %}
+                        </span>
+                    </div>
+                    <div class="small fw-bold text-dark mt-2">Catatan Peringatan AI:</div>
+                    <ul class="mb-0 ps-3 small text-muted">
+                        {% for w in analysis_result.warnings %}
+                            <li>{{ w }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="alert alert-success border border-dark small">
+                    <strong>Berhasil!</strong> Data sensor dan pembaruan kesehatan mesin telah otomatis dikirim dan diperbarui pada sistem Supervisi.
+                </div>
+            {% else %}
+                <div class="text-center text-muted py-5 font-monospace">
+                    SILAKAN INPUT DATA SENSOR PADA FORMULIR DI SEBELAH KIRI UNTUK MELIHAT ANALISIS AI.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

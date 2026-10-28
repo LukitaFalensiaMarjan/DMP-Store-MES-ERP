@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+
+{% block navbar_center %}
+<div class="d-flex align-items-center">
+    <a href="{{ url_for('manager_financial_activity') }}" class="nav-link-custom">Info Bisnis</a>
+    <a href="{{ url_for('manager_financial_charts') }}" class="nav-link-custom" style="color: #ff6f3c;">Grafik & Analisis AI</a>
+    <a href="{{ url_for('manager_procurement_approval') }}" class="nav-link-custom">Persetujuan Bahan Baku</a>
+    <a href="{{ url_for('manager_maintenance_approval') }}" class="nav-link-custom">Persetujuan Maintenance</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 mb-4 text-white" style="background-color: #0f172a; border: 3px solid #0f172a; box-shadow: 6px 6px 0px #ff6f3c; border-radius: 10px;">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <span class="badge bg-warning text-dark border border-dark fw-bold mb-2">// FINANCIAL & PRODUCT AI ADVISOR</span>
+            <h3 class="fw-extrabold mb-1">Visualisasi Grafik Keuangan & Analisis Strategis Bisnis</h3>
+            <p class="small text-light opacity-75 mb-0">Visualisasi data interaktif performa penjualan produk, alokasi beban pengeluaran, serta kesehatan lini mesin.</p>
+        </div>
+        <div class="p-3 bg-white text-dark rounded border border-dark text-end" style="box-shadow: 3px 3px 0px #ff6f3c;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="small fw-bold text-muted" style="font-size: 11px;">KAS PERUSAHAAN (SINKRON)</span>
+                <span class="badge bg-warning text-dark border border-dark font-monospace" style="font-size: 9px;">REAL-TIME</span>
+            </div>
+            <span class="fs-4 fw-extrabold text-dark font-monospace">Rp {{ "{:,.0f}".format(company_cash) }}</span>
+            <small class="text-muted d-block font-monospace" style="font-size: 10px;">
+                Kas Awal Rp {{ "{:,.0f}".format(base_capital_cash) }} + Pemasukan - Pengeluaran
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- 1. BARIS GRAFIK UTAMA: PRODUK & BREAKDOWN BIAYA -->
+<div class="row g-4 mb-4">
+    <!-- Grafik 1: Performa Omzet per Varian Produk (Horizontal Bar Chart) -->
+    <div class="col-lg-8">
+        <div class="card p-4 h-100 border-2 border-dark" style="box-shadow: 5px 5px 0px #0f172a;">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                <div>
+                    <h5 class="fw-extrabold mb-0"><i class="bi bi-bar-chart-line me-2"></i>Grafik Performa Pendapatan per Produk</h5>
+                    <small class="text-muted">Total omset yang dihasilkan dari masing-masing varian produk</small>
+                </div>
+                <span class="badge bg-dark font-monospace">11 PRODUK</span>
+            </div>
+            <div style="position: relative; height: 350px;">
+                <canvas id="productRevenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grafik 2: Komposisi Beban Pengeluaran (Doughnut Chart) -->
+    <div class="col-lg-4">
+        <div class="card p-4 h-100 border-2 border-dark" style="box-shadow: 5px 5px 0px #0f172a;">
+            <div class="border-bottom pb-2 mb-3">
+                <h5 class="fw-extrabold mb-0"><i class="bi bi-pie-chart me-2"></i>Alokasi Biaya Pengeluaran</h5>
+                <small class="text-muted">Struktur beban modal & operasional pabrik</small>
+            </div>
+            <div style="position: relative; height: 260px;">
+                <canvas id="costBreakdownChart"></canvas>
+            </div>
+            <div class="p-2 bg-light border border-dark rounded mt-3 small font-monospace">
+                <div class="d-flex justify-content-between mb-1">
+                    <span>• Bahan Baku:</span>
+                    <strong class="text-dark">Rp {{ "{:,.0f}".format(fin.breakdown.material) }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span>• Maintenance:</span>
+                    <strong class="text-dark">Rp {{ "{:,.0f}".format(fin.breakdown.maintenance) }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>• Operasional:</span>
+                    <strong class="text-dark">Rp {{ "{:,.0f}".format(fin.breakdown.production) }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. BARIS GRAFIK KEDUA: KATEGORI PRODUK & KESEHATAN LINI MESIN -->
+<div class="row g-4 mb-4">
+    <!-- Grafik 3: Kontribusi Omzet Kategori Produk -->
+    <div class="col-lg-6">
+        <div class="card p-4 h-100 border-2 border-dark" style="box-shadow: 5px 5px 0px #0f172a;">
+            <div class="border-bottom pb-2 mb-3">
+                <h5 class="fw-extrabold mb-0"><i class="bi bi-tags me-2"></i>Kontribusi Omzet per Kategori Produk</h5>
+                <small class="text-muted">Distribusi pendapatan berdasarkan lini kategori sabun & skincare</small>
+            </div>
+            <div style="position: relative; height: 280px;">
+                <canvas id="categoryRevenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grafik 4: Rata-Rata Health Score Lini Mesin Manufaktur -->
+    <div class="col-lg-6">
+        <div class="card p-4 h-100 border-2 border-dark" style="box-shadow: 5px 5px 0px #0f172a;">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                <div>
+                    <h5 class="fw-extrabold mb-0"><i class="bi bi-gear-wide-connected me-2"></i>Indeks Rata-Rata Kesehatan Lini Mesin</h5>
+                    <small class="text-muted">Kondisi kesehatan mesin per lini industri (Standar minimal: 70%)</small>
+                </div>
+                <span class="badge bg-success border border-dark">STATUS NORMAL</span>
+            </div>
+            <div style="position: relative; height: 280px;">
+                <canvas id="machineLineHealthChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. BARIS INSIGHTS AI & TABEL STRATEGIS -->
+<div class="row g-4 mb-4">
+    <!-- Kotak Analisis Kesehatan Keuangan AI -->
+    <div class="col-lg-6">
+        <div class="card p-4 h-100 border-2 border-dark" style="box-shadow: 5px 5px 0px #0f172a;">
+            <h5 class="fw-extrabold mb-3 border-bottom pb-2"><i class="bi bi-cpu me-2"></i>AI Financial Health Insights</h5>
+            <ul class="mb-3 ps-3">
+                {% for ins in fin.ai_insights %}
+                    <li class="mb-2 fw-semibold text-dark">{{ ins }}</li>
+                {% endfor %}
+            </ul>
+            <div class="alert alert-warning border border-dark p-3 mt-auto mb-0 small">
+                <strong>Rekomendasi Likuiditas Kas:</strong><br>
+                Dengan cadangan kas sebesar <strong>Rp {{ "{:,.0f}".format(company_cash) }}</strong>, perusahaan memiliki bantalan finansial yang sangat kuat untuk pengadaan bahan baku skala besar dan peremajaan mesin lini produksi.
+            </div>
+        </div>
+    </div>
+
+    <!-- Kotak Rekomendasi Produk AI & Tabel -->
+    <div class="col-lg-6">
+        <div class="card p-4 h-100 border-2 border-dark" style="box-shadow: 5px 5px 0px #0f172a;">
+            <h5 class="fw-extrabold mb-3 border-bottom pb-2"><i class="bi bi-graph-up-arrow me-2"></i>AI Product Growth Strategy</h5>
+            <ul class="mb-3 ps-3">
+                {% for rec in prod.recommendations %}
+                    <li class="mb-2 fw-semibold text-dark">{{ rec }}</li>
+                {% endfor %}
+            </ul>
+            <div class="table-responsive mt-auto">
+                <table class="table table-bordered align-middle small mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Produk</th>
+                            <th>Kategori</th>
+                            <th class="text-center">Total Terjual</th>
+                            <th class="text-end">Pendapatan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ps in prod.product_stats %}
+                        <tr>
+                            <td class="fw-bold">{{ ps.name }}</td>
+                            <td>{{ ps.category }}</td>
+                            <td class="text-center font-monospace">{{ "{:,.0f}".format(ps.total_qty) }} pcs</td>
+                            <td class="text-end fw-bold text-success font-monospace">Rp {{ "{:,.0f}".format(ps.total_revenue) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const rawData = {{ chart_data | tojson }};
+
+    // Helper Rupiah Formatter
+    function formatRp(value) {
+        return 'Rp ' + Number(value).toLocaleString('id-ID');
+    }
+
+    // Chart Defaults
+    Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+    Chart.defaults.color = "#0f172a";
+
+    // 1. Chart: Performa Pendapatan per Produk (Horizontal Bar)
+    const ctxProd = document.getElementById("productRevenueChart");
+    if (ctxProd) {
+        new Chart(ctxProd, {
+            type: "bar",
+            data: {
+                labels: rawData.prod_labels,
+                datasets: [{
+                    label: "Total Pendapatan (Rp)",
+                    data: rawData.prod_revenues,
+                    backgroundColor: "#1e3d59",
+                    borderColor: "#0f172a",
+                    borderWidth: 2,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return "Pendapatan: " + formatRp(ctx.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: "#e2e8f0" },
+                        ticks: {
+                            callback: function(v) {
+                                if (v >= 1000000000) return (v / 1000000000) + ' M';
+                                if (v >= 1000000) return (v / 1000000) + ' Jt';
+                                return v;
+                            }
+                        }
+                    },
+                    y: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Chart: Komposisi Beban Pengeluaran (Doughnut)
+    const ctxCost = document.getElementById("costBreakdownChart");
+    if (ctxCost) {
+        new Chart(ctxCost, {
+            type: "doughnut",
+            data: {
+                labels: rawData.cost_labels,
+                datasets: [{
+                    data: rawData.cost_values,
+                    backgroundColor: ["#ff6f3c", "#dc2626", "#1e3d59"],
+                    borderColor: "#0f172a",
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: { boxWidth: 14, font: { weight: "bold", size: 11 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return " " + ctx.label + ": " + formatRp(ctx.raw);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 3. Chart: Kontribusi Omzet Kategori Produk (Polar/Pie)
+    const ctxCat = document.getElementById("categoryRevenueChart");
+    if (ctxCat) {
+        new Chart(ctxCat, {
+            type: "pie",
+            data: {
+                labels: rawData.cat_labels,
+                datasets: [{
+                    data: rawData.cat_values,
+                    backgroundColor: ["#16a34a", "#2563eb", "#f59e0b", "#9333ea", "#0d9488"],
+                    borderColor: "#0f172a",
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: { boxWidth: 14, font: { weight: "bold", size: 11 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return " " + ctx.label + ": " + formatRp(ctx.raw);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 4. Chart: Health Score Lini Mesin
+    const ctxLine = document.getElementById("machineLineHealthChart");
+    if (ctxLine) {
+        new Chart(ctxLine, {
+            type: "bar",
+            data: {
+                labels: rawData.line_labels,
+                datasets: [{
+                    label: "Rata-Rata Health Score (%)",
+                    data: rawData.line_avg_health,
+                    backgroundColor: rawData.line_avg_health.map(v => v >= 80 ? "#16a34a" : (v >= 70 ? "#f59e0b" : "#dc2626")),
+                    borderColor: "#0f172a",
+                    borderWidth: 2,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return "Health Score: " + ctx.raw + "%";
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 100,
+                        grid: { color: "#e2e8f0" },
+                        ticks: {
+                            callback: function(v) { return v + "%"; }
+                        }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
